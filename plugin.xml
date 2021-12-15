@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<plugin id="cordova-plugins-aliyunOSSupload"
+  xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  version="1.0.0">  
+  <name>cordova-plugin-floating-window</name>   
+  <js-module name="FloatingWindow" src="www/FloatingWindow.js"> 
+    <clobbers target="FloatingWindow"/> 
+  </js-module> 
+
+  <platform name="android">  
+    <config-file parent="/*" target="AndroidManifest.xml"> 
+      <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW"/>  
+    </config-file>  
+    <source-file src="src/android/FloatingWindow.java" target-dir="src/com/plugin/other/FloatingWindow"/>   
+    <framework src="com.aliyun.dpa:oss-android-sdk:+"/> 
+  </platform>  
+
+  <platform name="ios"> 
+    <config-file parent="/*" target="config.xml"> 
+      <feature name="FloatingWindow"> 
+        <param name="ios-package" value="FloatingWindow"/> 
+      </feature>  
+    </config-file>  
+ 
+     
+  
+     <!-- 源文件 --> 
+     <source-file src="src/ios/FloatingWindow.m"/> 
+
+      
+    
+  </platform> 
+
+</plugin>

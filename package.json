@@ -1,0 +1,34 @@
+{
+  "_from": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+  "_id": "cordova-plugins-aliyunossupload@1.0.2",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/cordova-plugins-aliyunossupload",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+    "rawSpec": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+    "saveSpec": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+    "fetchSpec": "https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "#DEV:/",
+    "#USER"
+  ],
+  "_resolved": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git#bd2fafc48011eee6eabe28de2870524ff948b15b",
+  "_spec": "git+https://github.com/lounai-chen/cordova-plugins-aliyunOSSupload.git",
+  "_where": "G:\\app\\chestnutapp-source\\chestnutapp-source",
+  "author": "",
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "阿里云文件操作插件",
+  "license": "ISC",
+  "main": "index.js",
+  "name": "cordova-plugins-aliyunossupload",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.2"
+}
