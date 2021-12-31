@@ -1,4 +1,4 @@
-package com.plugin.float;
+package com.plugin.float.floatingwindow;
 
 import android.content.Context;
 import android.os.Build;

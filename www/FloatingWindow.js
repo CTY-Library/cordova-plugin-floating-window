@@ -1,6 +1,6 @@
 var exec = require('cordova/exec');
 
-var thisFloatingWindow = {
+var FloatingWindow = {
     //悬浮播放视频  
     show: function(
         success,
@@ -11,4 +11,4 @@ var thisFloatingWindow = {
     } 
 }
 
-module.exports = thisFloatingWindow
+module.exports = FloatingWindow
