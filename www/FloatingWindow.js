@@ -1,13 +1,13 @@
 var exec = require('cordova/exec');
 
 var thisFloatingWindow = {
-    //上传  
+    //悬浮播放视频  
     show: function(
         success,
         error,
-        data,
+        video_url,
     ) {
-        exec(success, error, 'FloatingWindow', 'show', data);
+        exec(success, error, 'FloatingMainActivity', 'show', video_url);
     } 
 }
 
