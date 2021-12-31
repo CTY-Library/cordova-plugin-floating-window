@@ -4,9 +4,10 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   version="1.0.0">  
   <name>cordova-plugin-floating-window</name>   
-  <js-module name="FloatingWindow" src="www/FloatingWindow.js"> 
+  <js-module name="FloatingWindow" src="www/floatingWindow.js"> 
     <clobbers target="FloatingWindow"/> 
   </js-module>
+
   <platform name="android">
     <config-file parent="/*" target="res/xml/config.xml">
         <feature name="floatWindow">
@@ -28,20 +29,5 @@
 
   </platform>  
 
-  <platform name="ios"> 
-    <config-file parent="/*" target="config.xml"> 
-      <feature name="FloatingWindow"> 
-        <param name="ios-package" value="FloatingWindow"/> 
-      </feature>  
-    </config-file>  
  
-     
-  
-     <!-- 源文件 --> 
-     <source-file src="src/ios/FloatingWindow.m"/> 
-
-      
-    
-  </platform> 
-
 </plugin>

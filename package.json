@@ -1,13 +1,30 @@
 {
-  "author": "",
-  "bundleDependencies": false,
-  "deprecated": false,
-  "description": "视频弹窗播放",
-  "license": "ISC",
-  "main": "index.js",
   "name": "cordova-plugin-floating-window",
-  "scripts": {
-    "test": ""
+  "version": "0.0.1",
+  "description": "a cordova plugin, a JS version of baiduasrtts",
+  "cordova": {
+    "id": "cordova-plugin-floating-window",
+    "platforms": [
+      "android",
+      "ios"
+    ]
   },
-  "version": "1.0.0"
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "cordova-plugin-floating-window",
+    "ASR",
+    "BaiduAsr"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "author": "",
+  "license": "ISC"
 }
