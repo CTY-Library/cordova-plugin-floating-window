@@ -5,9 +5,9 @@ var thisFloatingWindow = {
     show: function(
         success,
         error,
-        video_url,
+        video_url
     ) {
-        exec(success, error, 'FloatingMainActivity', 'show', video_url);
+        exec(success, error, 'FloatingWindow', 'show', video_url);
     } 
 }
 

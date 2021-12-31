@@ -1,4 +1,4 @@
-package com.zhongzilian.chestnutapp;
+package com.plugin.float;
 
 import android.app.Service;
 import android.content.Intent;
