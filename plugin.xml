@@ -3,29 +3,29 @@
   xmlns="http://apache.org/cordova/ns/plugins/1.0" 
   xmlns:android="http://schemas.android.com/apk/res/android"
   version="1.0.0">  
-  <name>cordova-plugin-floating-window</name>   
-  <js-module name="FloatingWindow" src="www/floatingWindow.js"> 
-    <clobbers target="FloatingWindow"/> 
+  <name>FloatingWindowPlugin</name>   
+  <js-module name="FloatingWindowPlugin" src="www/FloatingWindowPlugin.js"> 
+    <clobbers target="FloatingWindowPlugin"/> 
   </js-module>
 
   <platform name="android">
     <config-file parent="/*" target="res/xml/config.xml">
-        <feature name="floatWindow">
-            <param name="android-package" value="com.plugin.float.floatingwindow"/>
+        <feature name="FloatingWindowPlugin">
+            <param name="android-package" value="com.plugin.floatv1.floatingwindow.FloatingWindowPlugin"/>
         </feature>
     </config-file>
     <config-file parent="/*" target="AndroidManifest.xml"> 
       <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW"/>  
       <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     </config-file>
-    <source-file src="src/android/FloatingWindow.java" target-dir="src/com/plugin/float/floatingwindow"/>   
-    <source-file src="src/android/FloatingMainActivity.java" target-dir="src/com/plugin/float/floatingwindow"/>   
-    <source-file src="src/android/FloatingVideoService.java" target-dir="src/com/plugin/float/floatingwindow"/>   
-    <source-file src="src/res/layout/video_display.xml" target-dir="src/main/res/layout"/>   
+    <source-file src="src/android/FloatingWindowPlugin.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
+    <source-file src="src/android/FloatingMainActivity.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
+    <source-file src="src/android/FloatingVideoService.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
+    <source-file src="src/android/res/layout/video_display.xml" target-dir="src/main/res/layout"/>   
 
-    <activity android:name="com.plugin.float.FloatingMainActivity"></activity>
+    <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>
 
-    <service android:name="com.plugin.float.FloatingVideoService"></service>
+    <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>
 
   </platform>  
 

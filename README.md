@@ -5,7 +5,7 @@
     
 
 1.
-xml文件加
- <activity android:name="com.plugin.float.FloatingMainActivity"></activity>
+xml文件需手动添加到相应位置
+   <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>
 
- <service android:name="com.plugin.float.FloatingVideoService"></service>
+    <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>

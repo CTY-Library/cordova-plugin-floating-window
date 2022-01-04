@@ -7,7 +7,7 @@
 #import <CommonCrypto/CommonCrypto.h>
  
 
-@interface FloatingWindow : CDVPlugin {
+@interface FloatingWindowPlugin : CDVPlugin {
  
     CDVPluginResult* pluginResult;
 }

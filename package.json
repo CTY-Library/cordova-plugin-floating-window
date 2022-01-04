@@ -5,8 +5,7 @@
   "cordova": {
     "id": "cordova-plugin-floating-window",
     "platforms": [
-      "android",
-      "ios"
+      "android"
     ]
   },
   "keywords": [
@@ -14,8 +13,8 @@
     "cordova-android",
     "cordova-ios",
     "cordova-plugin-floating-window",
-    "ASR",
-    "BaiduAsr"
+    "float",
+    "window"
   ],
   "repository": {
     "type": "git",

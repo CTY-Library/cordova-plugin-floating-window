@@ -1,4 +1,4 @@
-package com.plugin.float.floatingwindow;
+package com.plugin.floatv1.floatingwindow;
 
 import android.app.Service;
 import android.content.Intent;
@@ -30,7 +30,7 @@ import java.io.IOException;
 
 public class FloatingVideoService extends Service {
     public static boolean isStarted = false;
-
+    public static String videoUrl;
     private WindowManager windowManager;
     private WindowManager.LayoutParams layoutParams;
 
@@ -104,7 +104,7 @@ public class FloatingVideoService extends Service {
                 }
             });
             try {
-                mediaPlayer.setDataSource(this, Uri.parse("https://chestmedia.oss-cn-shenzhen.aliyuncs.com/media/media1.mp4"));
+                mediaPlayer.setDataSource(this, Uri.parse(videoUrl));
                 mediaPlayer.prepareAsync();
             }
             catch (IOException e) {
