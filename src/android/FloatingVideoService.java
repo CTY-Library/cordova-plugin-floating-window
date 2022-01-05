@@ -23,6 +23,8 @@ import android.widget.Toast;
 import com.zhongzilian.chestnutapp.R;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * Created by admin on 2018/5/30.
@@ -31,10 +33,12 @@ import java.io.IOException;
 public class FloatingVideoService extends Service {
     public static boolean isStarted = false;
     public static String videoUrl;
+    public static String videoUrl_old;
+    public static LocalDateTime beginPlayer;
     private WindowManager windowManager;
     private WindowManager.LayoutParams layoutParams;
 
-    private MediaPlayer mediaPlayer;
+    public static MediaPlayer mediaPlayer;
     private View displayView;
 
     @Override
@@ -72,7 +76,12 @@ public class FloatingVideoService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    public  int getVideoDuration(){
+      return mediaPlayer.getDuration();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
+   // @RequiresApi(api = Build.VERSION_CODES.O)
     private void showFloatingWindow() {
         if (Settings.canDrawOverlays(this)) {
             LayoutInflater layoutInflater = LayoutInflater.from(this);
@@ -104,6 +113,8 @@ public class FloatingVideoService extends Service {
                 }
             });
             try {
+                videoUrl_old = videoUrl;
+                //beginPlayer = LocalDateTime.now();
                 mediaPlayer.setDataSource(this, Uri.parse(videoUrl));
                 mediaPlayer.prepareAsync();
             }
@@ -121,6 +132,9 @@ public class FloatingVideoService extends Service {
         @Override
         public boolean onTouch(View view, MotionEvent event) {
             switch (event.getAction()) {
+                case MotionEvent.ACTION_CANCEL:
+                      //isStarted = false; //todo
+                      break;
                 case MotionEvent.ACTION_DOWN:
                     x = (int) event.getRawX();
                     y = (int) event.getRawY();
@@ -136,6 +150,7 @@ public class FloatingVideoService extends Service {
                     layoutParams.y = layoutParams.y + movedY;
                     windowManager.updateViewLayout(view, layoutParams);
                     break;
+
                 default:
                     break;
             }

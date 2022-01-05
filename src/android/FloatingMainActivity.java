@@ -39,6 +39,11 @@ public  class FloatingMainActivity extends CordovaActivity {
     //}
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  public  long getVideoDuration(){
+   // return FloatingVideoService.mediaPlayer.getDuration();
+    return FloatingVideoService.mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+  }
 
 
   @RequiresApi(api = Build.VERSION_CODES.M)
@@ -55,6 +60,9 @@ public  class FloatingMainActivity extends CordovaActivity {
       Intent it = new Intent(context, FloatingVideoService.class);
       cordova.getActivity().startService(it);
     }
+
+
+
   }
 
 }
