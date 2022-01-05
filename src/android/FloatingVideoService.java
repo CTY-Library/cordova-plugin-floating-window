@@ -1,6 +1,7 @@
 package com.plugin.floatv1.floatingwindow;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.media.AudioManager;
@@ -27,7 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
- * Created by admin on 2018/5/30.
+ * Created by noah chen on 2022/1/5.
  */
 
 public class FloatingVideoService extends Service {
@@ -39,7 +40,7 @@ public class FloatingVideoService extends Service {
     private WindowManager.LayoutParams layoutParams;
 
     public static MediaPlayer mediaPlayer;
-    private View displayView;
+    public static View displayView;
 
     @Override
     public void onCreate() {
@@ -80,6 +81,27 @@ public class FloatingVideoService extends Service {
       return mediaPlayer.getDuration();
     }
 
+    public static void hideVideo() {
+      mediaPlayer.pause();
+      videoUrl = "";
+      displayView.setVisibility(View.GONE);    // 隐藏 view
+    }
+
+    public static void showVideo(String video_url, Context this_context) {
+        try {
+          displayView.setVisibility(View.VISIBLE); // 显示 view
+          videoUrl = video_url;
+          videoUrl_old = videoUrl;
+          mediaPlayer.reset();
+          mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
+          mediaPlayer.prepareAsync();
+        }
+        catch (IOException e) {
+          mediaPlayer.release();
+         // Toast.makeText(this_context, "无法打开视频源", Toast.LENGTH_LONG).show();
+        }
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
    // @RequiresApi(api = Build.VERSION_CODES.O)
     private void showFloatingWindow() {
@@ -112,15 +134,7 @@ public class FloatingVideoService extends Service {
                     mediaPlayer.start();
                 }
             });
-            try {
-                videoUrl_old = videoUrl;
-                //beginPlayer = LocalDateTime.now();
-                mediaPlayer.setDataSource(this, Uri.parse(videoUrl));
-                mediaPlayer.prepareAsync();
-            }
-            catch (IOException e) {
-                Toast.makeText(this, "无法打开视频源", Toast.LENGTH_LONG).show();
-            }
+
             windowManager.addView(displayView, layoutParams);
         }
     }
