@@ -13,6 +13,8 @@ import android.view.View;
 import android.widget.Toast;
 
 
+import com.zhongzilian.chestnutapp.R;
+
 import org.apache.cordova.CordovaActivity;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -25,21 +27,23 @@ public  class FloatingMainActivity extends CordovaActivity {
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState); 
+    super.onCreate(savedInstanceState);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
- 
+
     if (!Settings.canDrawOverlays(this)) {
       Toast.makeText(this, "授权失败", Toast.LENGTH_SHORT).show();
     } else {
       Toast.makeText(this, "授权成功", Toast.LENGTH_SHORT).show();
       startService(new Intent(FloatingMainActivity.this, FloatingVideoService.class));
-    } 
+    }
 
   }
+
+
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   public long getVideoDuration(){
@@ -47,11 +51,12 @@ public  class FloatingMainActivity extends CordovaActivity {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
-  public  void initStartFloatingVideoService(View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
+  public  void initStartFloatingVideoService(String video_url, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
     if (FloatingVideoService.isStarted) {
       return;
     }
-
+    FloatingVideoService.videoUrl = video_url;
+    FloatingVideoService.this_context = context;
     if (!Settings.canDrawOverlays(context)) {
       Toast.makeText(context, "当前无权限，请授权", Toast.LENGTH_SHORT);
       Intent it_power = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.getPackageName()));

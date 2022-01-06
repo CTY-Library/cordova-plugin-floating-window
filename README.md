@@ -7,8 +7,13 @@
 
 
 1.src\main\AndroidManifest.xml 文件 , 需手动添加以下到相应位置  
- `<activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>` 
- `<service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>`  
+
+ ```
+ <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>  
+ 
+
+ <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>  
+```  
 
 
 

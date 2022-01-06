@@ -19,6 +19,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.zhongzilian.chestnutapp.R;
@@ -32,143 +33,188 @@ import java.util.Date;
  */
 
 public class FloatingVideoService extends Service {
-    public static boolean isStarted = false;
-    public static String videoUrl;
-    public static String videoUrl_old;
-    public static LocalDateTime beginPlayer;
-    private WindowManager windowManager;
-    private WindowManager.LayoutParams layoutParams;
+  public static boolean isStarted = false;
+  public static String videoUrl;
+  public static String videoUrl_old;
+  public static long times_old;
+  public static LocalDateTime beginPlayer;
+  private WindowManager windowManager;
+  private WindowManager.LayoutParams layoutParams;
 
-    public static MediaPlayer mediaPlayer;
-    public static View displayView;
+  public static MediaPlayer mediaPlayer;
+  public static View displayView;
+  public static Context this_context;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        isStarted = true;
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        layoutParams = new WindowManager.LayoutParams();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-        } else {
-            layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    isStarted = true;
+    windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+    layoutParams = new WindowManager.LayoutParams();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+    } else {
+      layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
+    }
+    layoutParams.format = PixelFormat.RGBA_8888;
+    layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
+    layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+    layoutParams.width = 800;
+    layoutParams.height = 450;
+    layoutParams.x = 300;
+    layoutParams.y = 300;
+
+    mediaPlayer = new MediaPlayer();
+  }
+
+  @Nullable
+  @Override
+  public IBinder onBind(Intent intent) {
+    return null;
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  @Override
+  public int onStartCommand(Intent intent, int flags, int startId) {
+    showFloatingWindow();
+    return super.onStartCommand(intent, flags, startId);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  public static void hideVideo()
+  {
+    videoUrl = "-1";
+    times_old = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+    mediaPlayer.pause();
+    mediaPlayer.reset();
+
+    displayView.setVisibility(View.GONE);    // 隐藏 view
+    displayView.destroyDrawingCache();
+    displayView.clearAnimation();
+    displayView.cancelLongPress();
+    displayView.clearFocus();
+
+    isStarted = false;
+  }
+
+  //该方法未启用
+  public static void showVideo(String video_url, Context this_context) {
+    try {
+      if (mediaPlayer == null) { //第一次可能初始化还未完成
+        Thread.sleep(3000); //睡眠3秒
+        showVideo(video_url, this_context);
+      }
+      displayView.setVisibility(View.VISIBLE); // 显示 view
+
+      videoUrl = video_url;
+      videoUrl_old = videoUrl;
+      mediaPlayer.reset();
+      mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
+      mediaPlayer.prepare();//prepareAsync();
+      mediaPlayer.start();
+    }
+    catch (IOException | InterruptedException e) {
+      mediaPlayer.release();
+      // Toast.makeText(this_context, "无法打开视频源", Toast.LENGTH_LONG).show();
+    }
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.M)
+  // @RequiresApi(api = Build.VERSION_CODES.O)
+  private void showFloatingWindow() {
+    if (Settings.canDrawOverlays(this)) {
+      LayoutInflater layoutInflater = LayoutInflater.from(this);
+      displayView = layoutInflater.inflate(R.layout.video_display, null);
+      displayView.setVisibility(View.VISIBLE); // 显示 view
+      displayView.setOnTouchListener(new FloatingOnTouchListener());
+      mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+      SurfaceView surfaceView = displayView.findViewById(R.id.video_display_surfaceview);
+      final SurfaceHolder surfaceHolder = surfaceView.getHolder();
+      surfaceHolder.addCallback(new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+          mediaPlayer.setDisplay(surfaceHolder);
+          try {
+            videoUrl_old = videoUrl;
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
+            mediaPlayer.prepare(); //.prepareAsync(); //
+            mediaPlayer.start();
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
         }
-        layoutParams.format = PixelFormat.RGBA_8888;
-        layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
-        layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        layoutParams.width = 800;
-        layoutParams.height = 450;
-        layoutParams.x = 300;
-        layoutParams.y = 300;
-
-        mediaPlayer = new MediaPlayer();
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        showFloatingWindow();
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    public  int getVideoDuration(){
-      return mediaPlayer.getDuration();
-    }
-
-    public static void hideVideo() {
-      mediaPlayer.pause();
-      videoUrl = "";
-      displayView.setVisibility(View.GONE);    // 隐藏 view
-    }
-
-    public static void showVideo(String video_url, Context this_context) {
-        try {
-          displayView.setVisibility(View.VISIBLE); // 显示 view
-          videoUrl = video_url;
-          videoUrl_old = videoUrl;
-          mediaPlayer.reset();
-          mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
-          mediaPlayer.prepareAsync();
-        }
-        catch (IOException e) {
-          mediaPlayer.release();
-         // Toast.makeText(this_context, "无法打开视频源", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-   // @RequiresApi(api = Build.VERSION_CODES.O)
-    private void showFloatingWindow() {
-        if (Settings.canDrawOverlays(this)) {
-            LayoutInflater layoutInflater = LayoutInflater.from(this);
-            displayView = layoutInflater.inflate(R.layout.video_display, null);
-            displayView.setOnTouchListener(new FloatingOnTouchListener());
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            SurfaceView surfaceView = displayView.findViewById(R.id.video_display_surfaceview);
-            final SurfaceHolder surfaceHolder = surfaceView.getHolder();
-            surfaceHolder.addCallback(new SurfaceHolder.Callback() {
-                @Override
-                public void surfaceCreated(SurfaceHolder holder) {
-                    mediaPlayer.setDisplay(surfaceHolder);
-                }
-
-                @Override
-                public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-                }
-
-                @Override
-                public void surfaceDestroyed(SurfaceHolder holder) {
-
-                }
-            });
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mediaPlayer.start();
-                }
-            });
-
-            windowManager.addView(displayView, layoutParams);
-        }
-    }
-
-    private class FloatingOnTouchListener implements View.OnTouchListener {
-        private int x;
-        private int y;
 
         @Override
-        public boolean onTouch(View view, MotionEvent event) {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_CANCEL:
-                      //isStarted = false; //todo
-                      break;
-                case MotionEvent.ACTION_DOWN:
-                    x = (int) event.getRawX();
-                    y = (int) event.getRawY();
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    int nowX = (int) event.getRawX();
-                    int nowY = (int) event.getRawY();
-                    int movedX = nowX - x;
-                    int movedY = nowY - y;
-                    x = nowX;
-                    y = nowY;
-                    layoutParams.x = layoutParams.x + movedX;
-                    layoutParams.y = layoutParams.y + movedY;
-                    windowManager.updateViewLayout(view, layoutParams);
-                    break;
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
-                default:
-                    break;
-            }
-            return true;
         }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+
+        }
+      });
+      mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+
+        }
+      });
+
+      ImageView closeImageView =   displayView.findViewById(R.id.iv_close_window);
+      closeImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          // 关闭悬浮窗事件
+          hideVideo();
+        }
+      });
+
+      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
+      goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          // 关闭悬浮窗并且回到主窗口事件
+          hideVideo();
+
+        }
+      });
+
+      windowManager.addView(displayView, layoutParams);
     }
+  }
+
+  private class FloatingOnTouchListener implements View.OnTouchListener {
+    private int x;
+    private int y;
+
+    @Override
+    public boolean onTouch(View view, MotionEvent event) {
+      switch (event.getAction()) {
+        case MotionEvent.ACTION_CANCEL:
+          //isStarted = false; //todo
+          break;
+        case MotionEvent.ACTION_DOWN:
+          x = (int) event.getRawX();
+          y = (int) event.getRawY();
+          break;
+        case MotionEvent.ACTION_MOVE:
+          int nowX = (int) event.getRawX();
+          int nowY = (int) event.getRawY();
+          int movedX = nowX - x;
+          int movedY = nowY - y;
+          x = nowX;
+          y = nowY;
+          layoutParams.x = layoutParams.x + movedX;
+          layoutParams.y = layoutParams.y + movedY;
+          windowManager.updateViewLayout(view, layoutParams);
+          break;
+
+        default:
+          break;
+      }
+      return true;
+    }
+  }
 }

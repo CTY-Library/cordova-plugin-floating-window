@@ -27,8 +27,7 @@ public class FloatingWindowPlugin extends CordovaPlugin {
     super.initialize(cordova, webView);
     fma = new FloatingMainActivity();
     mActContext = this.cordova.getActivity().getApplicationContext();
-    //初始化
-    fma.initStartFloatingVideoService(this.webView.getView(),mActContext,this.cordova,this);
+
   }
 
 
@@ -36,24 +35,28 @@ public class FloatingWindowPlugin extends CordovaPlugin {
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     String video_url = args.getString(0);
+
     //打开悬浮窗
     if (action.equals("show")) {
-      FloatingVideoService.showVideo(video_url, mActContext);
+      fma.initStartFloatingVideoService(video_url,this.webView.getView(),mActContext,this.cordova,this);
       return true;
     }
     //获取悬浮信息
     else if (action.equals("get")) {
-      String v_url = FloatingVideoService.videoUrl_old;
-      long v_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体时间
-      PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "url:" + v_url+",times:" + v_times);
+      String o_url = FloatingVideoService.videoUrl_old;
+      String n_url = FloatingVideoService.videoUrl;
+      long n_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体时间
+      if(n_url.compareTo("-1") == 0){
+        //播放被关闭
+        n_times = FloatingVideoService.times_old;
+        n_url = o_url;
+      }
+      PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "|url:" + n_url+",times:" + n_times);
       pluginResult.setKeepCallback(true);
       callbackContext.sendPluginResult(pluginResult);
       return true;
     }
-    //关闭当前悬浮窗
-    else if (action.equals("close")) {
-      FloatingVideoService.hideVideo();
-    }
+
     return false;
   }
 
