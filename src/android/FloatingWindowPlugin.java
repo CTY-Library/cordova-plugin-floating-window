@@ -21,6 +21,8 @@ import org.json.JSONException;
 public class FloatingWindowPlugin extends CordovaPlugin {
   private FloatingMainActivity fma;
   private Context mActContext;
+  private static CallbackContext mCallbackContext;
+
   @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -35,9 +37,11 @@ public class FloatingWindowPlugin extends CordovaPlugin {
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     String video_url = args.getString(0);
-
+    
+     
     //打开悬浮窗
     if (action.equals("show")) {
+      mCallbackContext = callbackContext;    //拿到回调对象并保存
       fma.initStartFloatingVideoService(video_url,this.webView.getView(),mActContext,this.cordova,this);
       return true;
     }
@@ -59,5 +63,16 @@ public class FloatingWindowPlugin extends CordovaPlugin {
 
     return false;
   }
+
+  public static void callJS(String message) {
+      if (mCallbackContext != null) {
+          PluginResult dataResult = new PluginResult(PluginResult.Status.OK, message);
+          dataResult.setKeepCallback(true);// 非常重要
+          mCallbackContext.sendPluginResult(dataResult);
+      }
+  }
+  
+ 
+
 
 }

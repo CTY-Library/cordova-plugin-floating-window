@@ -83,6 +83,8 @@ public class FloatingVideoService extends Service {
   @RequiresApi(api = Build.VERSION_CODES.M)
   public static void hideVideo()
   {
+    long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+    
     videoUrl = "-1";
     times_old = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
     mediaPlayer.pause();
@@ -95,29 +97,10 @@ public class FloatingVideoService extends Service {
     displayView.clearFocus();
 
     isStarted = false;
+   
+    FloatingWindowPlugin.callJS(""+cur_times);
   }
 
-  //该方法未启用
-  public static void showVideo(String video_url, Context this_context) {
-    try {
-      if (mediaPlayer == null) { //第一次可能初始化还未完成
-        Thread.sleep(3000); //睡眠3秒
-        showVideo(video_url, this_context);
-      }
-      displayView.setVisibility(View.VISIBLE); // 显示 view
-
-      videoUrl = video_url;
-      videoUrl_old = videoUrl;
-      mediaPlayer.reset();
-      mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
-      mediaPlayer.prepare();//prepareAsync();
-      mediaPlayer.start();
-    }
-    catch (IOException | InterruptedException e) {
-      mediaPlayer.release();
-      // Toast.makeText(this_context, "无法打开视频源", Toast.LENGTH_LONG).show();
-    }
-  }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   // @RequiresApi(api = Build.VERSION_CODES.O)
@@ -135,6 +118,7 @@ public class FloatingVideoService extends Service {
         public void surfaceCreated(SurfaceHolder holder) {
           mediaPlayer.setDisplay(surfaceHolder);
           try {
+            isStarted = true;
             videoUrl_old = videoUrl;
             mediaPlayer.reset();
             mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
@@ -175,8 +159,20 @@ public class FloatingVideoService extends Service {
       goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
-          // 关闭悬浮窗并且回到主窗口事件
+          
+           // todo
+           // 关闭悬浮窗并且回到主窗口事件
           hideVideo();
+ 
+          //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
+
+          //          Intent intent = new Intent(this_cordova.getActivity(), FloatingMainActivity.class);
+//          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//          startActivity(intent);
+
+          //Intent it = new Intent(this_context, FloatingVideoService.class);
+          //Intent it = new Intent(this_context, MainActivity.class); //  this_cordova.getActivity().getClass());
+          //this_cordova.getActivity().startService(it);
 
         }
       });
