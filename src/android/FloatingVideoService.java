@@ -84,7 +84,7 @@ public class FloatingVideoService extends Service {
   public static void hideVideo()
   {
     long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
-    
+
     videoUrl = "-1";
     times_old = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
     mediaPlayer.pause();
@@ -97,7 +97,7 @@ public class FloatingVideoService extends Service {
     displayView.clearFocus();
 
     isStarted = false;
-   
+
     FloatingWindowPlugin.callJS(""+cur_times);
   }
 
@@ -155,27 +155,27 @@ public class FloatingVideoService extends Service {
         }
       });
 
-      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
-      goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          
-           // todo
-           // 关闭悬浮窗并且回到主窗口事件
-          hideVideo();
- 
-          //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
+//           // todo
+//           // 关闭悬浮窗并且回到主窗口事件
+//      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
+//      goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
 
-          //          Intent intent = new Intent(this_cordova.getActivity(), FloatingMainActivity.class);
-//          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//          startActivity(intent);
-
-          //Intent it = new Intent(this_context, FloatingVideoService.class);
-          //Intent it = new Intent(this_context, MainActivity.class); //  this_cordova.getActivity().getClass());
-          //this_cordova.getActivity().startService(it);
-
-        }
-      });
+//          hideVideo();
+//
+//          //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
+//
+//          //          Intent intent = new Intent(this_cordova.getActivity(), FloatingMainActivity.class);
+////          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+////          startActivity(intent);
+//
+//          //Intent it = new Intent(this_context, FloatingVideoService.class);
+//          //Intent it = new Intent(this_context, MainActivity.class); //  this_cordova.getActivity().getClass());
+//          //this_cordova.getActivity().startService(it);
+//
+//        }
+//      });
 
       windowManager.addView(displayView, layoutParams);
     }
