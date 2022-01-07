@@ -49,7 +49,7 @@ public class FloatingWindowPlugin extends CordovaPlugin {
     else if (action.equals("get")) {
       String o_url = FloatingVideoService.videoUrl_old;
       String n_url = FloatingVideoService.videoUrl;
-      long n_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体时间
+      long n_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体播放时间
       if(n_url.compareTo("-1") == 0){
         //播放被关闭
         n_times = FloatingVideoService.times_old;
