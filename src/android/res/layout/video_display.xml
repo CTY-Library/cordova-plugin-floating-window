@@ -5,26 +5,6 @@
     android:layout_height="match_parent"
     android:padding="0dp" >
 
-  <!--回到主窗口按钮
-  <ImageView
-    android:id="@+id/iv_zoom_main_btn"
-    android:src="@mipmap/nn_paster_btn_scale"
-    android:clickable="true"
-    android:layout_width="40dp"
-    android:layout_height="40dp"
-    android:layout_alignParentRight="true"
-    android:layout_alignParentTop="true"
-    android:paddingBottom="15dp"
-    android:paddingLeft="15dp"
-    android:paddingRight="5dp"
-    android:paddingTop="5dp"
-    android:scaleType="centerCrop"
-    android:layout_marginLeft="0dp"
-    android:layout_marginRight="0dp"
-    android:layout_marginTop="100dp"
-    android:visibility="gone"
-    />
--->
 
 
   <LinearLayout
@@ -48,5 +28,17 @@
     android:layout_alignParentRight="true"
     android:src="@mipmap/nn_paster_btn_close"
   />
+
+  <!--回到主窗口按钮-->
+ <ImageView
+   android:id="@+id/iv_zoom_main_btn"
+   android:src="@mipmap/nn_paster_btn_scale"
+   android:clickable="true"
+   android:layout_width="20dp"
+   android:layout_height="20dp"
+   android:layout_alignParentLeft="true"
+   />
+
+
 
 </RelativeLayout >

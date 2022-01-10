@@ -37,19 +37,19 @@ public class FloatingWindowPlugin extends CordovaPlugin {
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     String video_url = args.getString(0);
-    
-     
+
     //打开悬浮窗
     if (action.equals("show")) {
       mCallbackContext = callbackContext;    //拿到回调对象并保存
-      fma.initStartFloatingVideoService(video_url,this.webView.getView(),mActContext,this.cordova,this);
+      int times_cur = Integer.parseInt(args.getString(1)); //毫秒,跳到当前时间播放
+      fma.initStartFloatingVideoService(video_url,times_cur,this.webView.getView(),mActContext,this.cordova,this);
       return true;
     }
     //获取悬浮信息
     else if (action.equals("get")) {
       String o_url = FloatingVideoService.videoUrl_old;
       String n_url = FloatingVideoService.videoUrl;
-      long n_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体播放时间
+      long n_times =  fma.getVideoDuration(); //microseconds. 以微秒为单位的锚的媒体时间
       if(n_url.compareTo("-1") == 0){
         //播放被关闭
         n_times = FloatingVideoService.times_old;
@@ -71,8 +71,8 @@ public class FloatingWindowPlugin extends CordovaPlugin {
           mCallbackContext.sendPluginResult(dataResult);
       }
   }
-  
- 
+
+
 
 
 }

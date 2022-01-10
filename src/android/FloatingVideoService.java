@@ -1,5 +1,6 @@
 package com.plugin.floatv1.floatingwindow;
 
+import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -22,7 +23,10 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.zhongzilian.chestnutapp.MainActivity;
 import com.zhongzilian.chestnutapp.R;
+
+import org.apache.cordova.CordovaInterface;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -37,6 +41,7 @@ public class FloatingVideoService extends Service {
   public static String videoUrl;
   public static String videoUrl_old;
   public static long times_old;
+  public static int times_cur = 0;
   public static LocalDateTime beginPlayer;
   private WindowManager windowManager;
   private WindowManager.LayoutParams layoutParams;
@@ -44,6 +49,8 @@ public class FloatingVideoService extends Service {
   public static MediaPlayer mediaPlayer;
   public static View displayView;
   public static Context this_context;
+  public static CordovaInterface this_cordova;
+  public static View this_view;
 
   @Override
   public void onCreate() {
@@ -99,6 +106,9 @@ public class FloatingVideoService extends Service {
     isStarted = false;
 
     FloatingWindowPlugin.callJS(""+cur_times);
+
+    Intent it = new Intent(this_cordova.getActivity().getBaseContext(), FloatingVideoService.class);
+    this_cordova.getActivity().getBaseContext().stopService(it);
   }
 
 
@@ -124,6 +134,8 @@ public class FloatingVideoService extends Service {
             mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
             mediaPlayer.prepare(); //.prepareAsync(); //
             mediaPlayer.start();
+            mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
+            //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -155,27 +167,19 @@ public class FloatingVideoService extends Service {
         }
       });
 
-//           // todo
-//           // 关闭悬浮窗并且回到主窗口事件
-//      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
-//      goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
 
-//          hideVideo();
-//
-//          //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
-//
-//          //          Intent intent = new Intent(this_cordova.getActivity(), FloatingMainActivity.class);
-////          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-////          startActivity(intent);
-//
-//          //Intent it = new Intent(this_context, FloatingVideoService.class);
-//          //Intent it = new Intent(this_context, MainActivity.class); //  this_cordova.getActivity().getClass());
-//          //this_cordova.getActivity().startService(it);
-//
-//        }
-//      });
+      // 关闭悬浮窗并且回到主窗口事件
+      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
+      goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+          /**将被挤压到后台的本应用重新置顶到最前端
+           * 当自己的应用在后台时，将它切换到前台来*/
+          FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext()); //MainActivity.this
+
+        }
+      });
 
       windowManager.addView(displayView, layoutParams);
     }

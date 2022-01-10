@@ -27,6 +27,7 @@ FloatingWindowPlugin.show(
     function(r){
         alert('失败'+r)
     },
-    'https://xxx.aliyuncs.com/media/media1.mp4'
+    'https://xxx.aliyuncs.com/media/media1.mp4',
+    300 //毫秒,跳到当前时间播放
 );
 ```
