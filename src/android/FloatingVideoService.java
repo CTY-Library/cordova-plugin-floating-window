@@ -135,6 +135,7 @@ public class FloatingVideoService extends Service {
             mediaPlayer.prepare(); //.prepareAsync(); //
             mediaPlayer.start();
             mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
+            FloatingWindowPlugin.callJS("-1");
             //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
           } catch (IOException e) {
             e.printStackTrace();
@@ -177,7 +178,7 @@ public class FloatingVideoService extends Service {
           /**将被挤压到后台的本应用重新置顶到最前端
            * 当自己的应用在后台时，将它切换到前台来*/
           FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext()); //MainActivity.this
-
+          FloatingWindowPlugin.callJS("-2");
         }
       });
 
