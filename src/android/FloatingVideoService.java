@@ -44,7 +44,7 @@ public class FloatingVideoService extends Service {
   public static int times_cur = 0;
   public static LocalDateTime beginPlayer;
   private WindowManager windowManager;
-  private WindowManager.LayoutParams layoutParams;
+  public static WindowManager.LayoutParams layoutParams;
 
   public static MediaPlayer mediaPlayer;
   public static View displayView;
@@ -107,10 +107,25 @@ public class FloatingVideoService extends Service {
 
     FloatingWindowPlugin.callJS(""+cur_times);
 
-    Intent it = new Intent(this_cordova.getActivity().getBaseContext(), FloatingVideoService.class);
-    this_cordova.getActivity().getBaseContext().stopService(it);
+//    Intent it = new Intent(this_cordova.getActivity().getBaseContext(), FloatingVideoService.class);
+//    this_cordova.getActivity().getBaseContext().stopService(it);
   }
 
+  public static void showVideo(){
+    try {
+      isStarted = true;
+      videoUrl_old = videoUrl;
+      mediaPlayer.reset();
+      mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
+      mediaPlayer.prepare(); //.prepareAsync(); //
+      mediaPlayer.start();
+      mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
+      FloatingWindowPlugin.callJS("1");
+      //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   // @RequiresApi(api = Build.VERSION_CODES.O)
@@ -127,19 +142,7 @@ public class FloatingVideoService extends Service {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
           mediaPlayer.setDisplay(surfaceHolder);
-          try {
-            isStarted = true;
-            videoUrl_old = videoUrl;
-            mediaPlayer.reset();
-            mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
-            mediaPlayer.prepare(); //.prepareAsync(); //
-            mediaPlayer.start();
-            mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
-            FloatingWindowPlugin.callJS("-1");
-            //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          showVideo();
         }
 
         @Override
@@ -177,8 +180,8 @@ public class FloatingVideoService extends Service {
 
           /**将被挤压到后台的本应用重新置顶到最前端
            * 当自己的应用在后台时，将它切换到前台来*/
-          FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext()); //MainActivity.this
-          FloatingWindowPlugin.callJS("-2");
+          FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext());
+          FloatingWindowPlugin.callJS("2");
         }
       });
 
