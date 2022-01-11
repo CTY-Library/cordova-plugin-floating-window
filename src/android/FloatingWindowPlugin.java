@@ -60,7 +60,10 @@ public class FloatingWindowPlugin extends CordovaPlugin {
       callbackContext.sendPluginResult(pluginResult);
       return true;
     }
-
+    else if (action.equals("close")) {
+      FloatingVideoService.closeVideo();
+      return true;
+    }
     return false;
   }
 

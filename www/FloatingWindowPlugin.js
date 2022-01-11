@@ -18,6 +18,12 @@ var FloatingWindowPlugin = {
         video_url
     ) {
         exec(success, error, 'FloatingWindowPlugin', 'get', [video_url]);
+    },
+    close: function(
+        success,
+        error        
+    ) {
+        exec(success, error, 'FloatingWindowPlugin', 'close', ['']);
     } 
 }
 
