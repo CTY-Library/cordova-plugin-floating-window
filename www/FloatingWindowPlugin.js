@@ -6,10 +6,11 @@ var FloatingWindowPlugin = {
         success,
         error,
         video_url,
-        times_cur
+        times_cur,
+        landscape
     ) {
         cordova.require('cordova/channel').onCordovaReady.subscribe(function(){
-            exec(success, error, 'FloatingWindowPlugin', 'show', [video_url,times_cur]);
+            exec(success, error, 'FloatingWindowPlugin', 'show', [video_url,times_cur,landscape]);
         });
     }, 
     get: function(

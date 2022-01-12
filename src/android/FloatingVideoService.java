@@ -58,7 +58,7 @@ public class FloatingVideoService extends Service  {
   public static CordovaInterface this_cordova;
   public static View this_view;
   public static RelativeLayout video_display_relativeLayout;
-
+  public static int  landscape = 1;
 
   @Override
   public void onCreate() {
@@ -74,10 +74,17 @@ public class FloatingVideoService extends Service  {
     layoutParams.format = PixelFormat.RGBA_8888;
     layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
     layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-    layoutParams.width = 800;
-    layoutParams.height = 450;
+    
     layoutParams.x = 300;
     layoutParams.y = 300;
+
+    if(landscape==1){
+      layoutParams.width = 800;
+      layoutParams.height = 450;
+    }else{
+      layoutParams.width = 450;
+      layoutParams.height = 800;
+    }
 
     mediaPlayer = new MediaPlayer();
   }

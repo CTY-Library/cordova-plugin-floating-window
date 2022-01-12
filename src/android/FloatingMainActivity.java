@@ -54,13 +54,14 @@ public  class FloatingMainActivity extends CordovaActivity {
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
-  public  void initStartFloatingVideoService(String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
+  public  void initStartFloatingVideoService(int landscape ,String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
 
     FloatingVideoService.videoUrl = video_url;
     FloatingVideoService.this_context = context;
     FloatingVideoService.this_cordova = cordova;
     FloatingVideoService.this_view = view;
     FloatingVideoService.times_cur = times_cur;
+    FloatingVideoService.landscape = landscape;
 
     if (FloatingVideoService.isStarted) {
       FloatingVideoService.showVideo();
