@@ -25,7 +25,10 @@
 @implementation FloatingWindowPlugin
 
 - (void)pluginInitialize {
-    CDVViewController *viewController = (CDVViewController *)self.viewController; 
+    CDVViewController *viewController = (CDVViewController *)self.viewController;
+    
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [[AVAudioSession sharedInstance] setActive:YES error:nil];
 }
 
 - (void)show:(CDVInvokedUrlCommand *)command
@@ -80,5 +83,40 @@
 {
      [self.picController stopPictureInPicture];
 }
+
+#pragma mark - delegate
+
+- (void)pictureInPictureControllerWillStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
+{
+    
+}
+
+
+- (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
+{
+    
+}
+
+
+- (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error
+{
+    NSLog(@"%@",error);
+}
+
+
+- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
+{
+    
+}
+- (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
+{
+    
+}
+- (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL restored))completionHandler
+{
+    
+}
+
+
 
 @end
