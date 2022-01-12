@@ -6,7 +6,7 @@
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonCrypto.h>
 
-@interface FloatingWindowPlugin : CDVPlugin {
+@interface FloatingWindowPlugin()<AVPictureInPictureControllerDelegate> : CDVPlugin {
     NSString *urlString;
     NSInt *callback;
     CDVPluginResult* pluginResult;
