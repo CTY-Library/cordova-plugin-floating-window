@@ -79,9 +79,15 @@
     
 }
 
+- (void) callJs{
+   callback = self.player.currentTime;
+   [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:self.callback];//主动回调给JS
+}
+
 - (void)close:(CDVInvokedUrlCommand *)command
 {
      [self.picController stopPictureInPicture];
+     [self callJs];  
 }
 
 #pragma mark - delegate
@@ -113,13 +119,13 @@
 //DidStop
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-    
+   
 }
 
 //StopWithCompletion
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL restored))completionHandler
 {
-    
+     [self callJs];
 }
 
 
