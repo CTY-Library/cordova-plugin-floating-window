@@ -1,133 +1,80 @@
-/********* FileUpload.m Cordova Plugin Implementation *******/
-
+/********* FloatingWindowPlugin.m Cordova Plugin Implementation *******/
+ 
 #import <Cordova/CDV.h>
   
 #import <AVKit/AVKit.h>
 #import <Foundation/Foundation.h>
 #import <CommonCrypto/CommonCrypto.h>
 
-@interface FloatingWindowPlugin()<AVPictureInPictureControllerDelegate> : CDVPlugin {
+#import "FloatViewController.h"
+
+
+@interface FloatingWindowPlugin : CDVPlugin {
     NSString *urlString;
-    NSInt *callback;
-    CDVPluginResult* pluginResult;
 }
- 
-@property(nonatomic,strong) AVPlayer * player;
+@property (nonatomic ,strong) NSString *callback_cur;
+//@property (nonatomic ,strong) CDVPluginResult *pluginResult;
+@property (nonatomic ,strong) FloatViewController *floatv1;
 
-@property (weak, nonatomic) IBOutlet UIView *playerView;
-
-@property(nonatomic,strong) AVPictureInPictureController * picController;
-
-
-- (void)putObject:(CDVInvokedUrlCommand*)command;
+- (void)show:(CDVInvokedUrlCommand*)command;
+- (void)get:(CDVInvokedUrlCommand*)command;
+- (void)close:(CDVInvokedUrlCommand*)command;
 @end
 
 @implementation FloatingWindowPlugin
 
+static NSString* myAsyncCallBackId = nil;
+static CDVPluginResult *pluginResult = nil;
+static FloatingWindowPlugin *selfplugin = nil;
+
 - (void)pluginInitialize {
-    CDVViewController *viewController = (CDVViewController *)self.viewController;
-    
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+    _floatv1 = [[FloatViewController alloc] init];
 }
 
 - (void)show:(CDVInvokedUrlCommand *)command
 {
      urlString = [command.arguments objectAtIndex:0];
-     [self setUpPlayer];
+    
+    [self.floatv1 viewDidLoad];
+    [self.floatv1 setUpPlayer:urlString];
 
-    if (self.picController.isPictureInPicturePossible) {
-        [self.picController startPictureInPicture];
-    }
-    else
-    {
-        NSLog(@"picture is not possible");
-    }
-
-  
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:successDictionary];
-
-     //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
+ 
+    myAsyncCallBackId = command.callbackId;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT  ];
     [pluginResult setKeepCallbackAsBool:YES];
-
-    [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:self.callback];//主动回调给JS
-
-
+    [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
 }
 
-- (void)setUpPlayer
-{ 
-    AVPlayerItem * item = [[AVPlayerItem alloc] initWithURL:[NSURL fileURLWithPath:urlString]]; 
-    self.player = [AVPlayer playerWithPlayerItem:item];
-    AVPlayerLayer * layer = [AVPlayerLayer playerLayerWithPlayer:self.player];
-    layer.frame = self.playerView.bounds;
-    layer.backgroundColor = [UIColor blueColor].CGColor;
-    NSLog(@"%@",NSStringFromCGRect(self.view.bounds));
-    [self.playerView.layer addSublayer:layer];
+-  (void)  sendCmd : (NSString *)video_times
+{
+    if(myAsyncCallBackId != nil)
+    {
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: video_times ];
+        //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
+        [pluginResult  setKeepCallbackAsBool:YES];
+        [selfplugin.commandDelegate sendPluginResult:pluginResult callbackId: myAsyncCallBackId];
 
-    NSLog(@"---------------%@",NSStringFromCGRect(layer.bounds));
-
-    self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
-    self.picController.delegate = self;
-    [self.player play];
-
-} 
-
+    }
+}
 
 - (void)get:(CDVInvokedUrlCommand *)command
 {
+    selfplugin = self;
+    [self.floatv1 show];
+    
+    myAsyncCallBackId = command.callbackId; 
+    
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: @"-1" ];
+    [pluginResult setKeepCallbackAsBool:YES]; //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
+    [self.commandDelegate sendPluginResult: pluginResult callbackId: command.callbackId];
+ 
     
 }
-
-- (void) callJs{
-   callback = self.player.currentTime;
-   [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:self.callback];//主动回调给JS
-}
+ 
 
 - (void)close:(CDVInvokedUrlCommand *)command
 {
-     [self.picController stopPictureInPicture];
-     [self callJs];  
+     
 }
-
-#pragma mark - delegate
-
-//WillStart
-- (void)pictureInPictureControllerWillStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
-{
-    
-}
-
-//DidStart
-- (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
-{
-    
-}
-
-//failedToStart
-- (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error
-{
-    NSLog(@"%@",error);
-}
-
-//WillStop
-- (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
-{
-    
-}
-
-//DidStop
-- (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
-{
-   
-}
-
-//StopWithCompletion
-- (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL restored))completionHandler
-{
-     [self callJs];
-}
-
-
-
+ 
 @end

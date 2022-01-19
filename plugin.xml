@@ -34,5 +34,19 @@
 
   </platform>  
 
+
+  <platform name="ios"> 
+    <config-file parent="/*" target="config.xml"> 
+      <feature name="FloatingWindowPlugin"> 
+        <param name="ios-package" value="FloatingWindowPlugin"/> 
+      </feature> 
+    </config-file>  
+     <!-- 源文件 -->
+     <source-file src="src/ios/FloatingWindowPlugin.m"/> 
+     <source-file src="src/ios/FloatingWindowPlugin.h"/> 
+     <source-file src="src/ios/FloatViewController.m"/> 
+     <source-file src="src/ios/FloatViewController.h"/> 
+  </platform> 
+
  
 </plugin>
