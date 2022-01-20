@@ -46,7 +46,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 
  
     myAsyncCallBackId = command.callbackId;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT  ];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"" ];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
 }
