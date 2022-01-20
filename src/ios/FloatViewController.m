@@ -105,7 +105,7 @@ static float   paly_times_cur;
 //跳转到指定的秒数
 -(void)jumptoValue {
     if(paly_times_cur > 0){
-     CMTime changedTime = CMTimeMakeWithSeconds( paly_times_cur, 1);
+     CMTime changedTime = CMTimeMakeWithSeconds( paly_times_cur / 1000, 1);
         [self.player seekToTime:changedTime completionHandler:^(BOOL finished) {
          
         }];
