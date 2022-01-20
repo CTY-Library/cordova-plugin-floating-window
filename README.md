@@ -39,11 +39,11 @@ FloatingWindowPlugin.show(
 FloatingWindowPlugin.show(
     function(t){
         FloatingWindowPlugin.get( function(t){
-        alert('成功'+t) // 点击关闭按钮,就会触发这个回调 (返回的是 microseconds. 以微秒为单位的锚的媒体播放时间 )
-    },
-    function(r){
-        alert('失败'+r)
-    },'') ;
+            alert('成功'+t) // 点击关闭按钮,就会触发这个回调 (返回的是 microseconds. 以微秒为单位的锚的媒体播放时间 )
+        },
+        function(r){
+            alert('失败'+r)
+        },'') ;
     },
     function(r){
         alert('失败'+r)
