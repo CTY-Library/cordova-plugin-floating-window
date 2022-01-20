@@ -12,12 +12,13 @@
 
 @interface FloatViewController () <AVPictureInPictureControllerDelegate>
 
-
-
 @property(nonatomic,strong) AVPlayer * player;
 
 @property (nonatomic ,strong)   UIWindow *window;
 @property (nonatomic ,strong)   UIView *playerView;
+
+@property(nonatomic,strong) NSString * flg;
+
 
 @property(nonatomic,strong) AVPictureInPictureController * picController;
 
@@ -26,6 +27,8 @@
 
 @end
 
+static float   paly_times_cur;
+
 @implementation FloatViewController
 
 - (void)viewDidLoad {
@@ -33,7 +36,7 @@
  
 }
 
-- (void)setUpPlayer: (NSString *)video_url
+- (void)setUpPlayer: (NSString *)video_url  i_times_cur:(float )i_times_cur   i_landscape:(NSInteger )i_landscape
 {
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
@@ -43,7 +46,12 @@
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     //创建uiview对象
     _playerView = [[UIView alloc] init];
-    [self.playerView setFrame:CGRectMake(100,100,175,102)];
+    paly_times_cur = i_times_cur;
+    if(i_landscape==1){ //横屏
+      [self.playerView setFrame:CGRectMake(100,100,175,102)];
+    } else {
+      [self.playerView setFrame:CGRectMake(100,100,102,175)];
+    }
     _playerView.backgroundColor = [UIColor whiteColor];
     [self.playerView setTag:20];
     
@@ -64,13 +72,13 @@
 
     self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
     self.picController.delegate = self;
-   // self.picController.shouldGroupAccessibilityChildren = false;
-  
+    self.picController.requiresLinearPlayback = true; //隐藏快进按钮
 }
 
 
 - (void) show {
     if (self.picController.isPictureInPicturePossible) {
+        self.flg = @"show";
         [self.picController startPictureInPicture];
     }
     else
@@ -78,27 +86,43 @@
         NSLog(@"picture is not possible");
     }
     
-   }
+}
+
+- (void) close{
+    if(self.picController.isPictureInPictureActive){
+        self.flg = @"close";
+        [self.picController stopPictureInPicture];
+        //[self sendCurTimeMsg];
+    }
+}
 
 -(void)viewDidAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
-    //[self setUpPlayer];
+
+    [super viewDidAppear:animated]; 
 }
 
-- (IBAction)startClick:(id)sender {
-    if (self.picController.isPictureInPicturePossible) {
-        [self.picController startPictureInPicture];
+//跳转到指定的秒数
+-(void)jumptoValue {
+    if(paly_times_cur > 0){
+     CMTime changedTime = CMTimeMakeWithSeconds( paly_times_cur, 1);
+        [self.player seekToTime:changedTime completionHandler:^(BOOL finished) {
+         
+        }];
     }
-    else
-    {
-        NSLog(@"picture is not possible");
-    }
-}
-- (IBAction)endClick:(id)sender {
-    [self.picController stopPictureInPicture];
+ 
 }
 
+ 
+-(void) sendCurTimeMsg {
+    [self.player pause];
+    
+    CMTime time = self.player.currentTime;
+    NSTimeInterval cur_time =  time.value / time.timescale;
+    int seconds = ((int)cur_time)%(3600*24)%3600%60 * 1000; //毫秒
+    [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
+    
+}
 
 #pragma mark - delegate
 
@@ -115,8 +139,9 @@
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //开启
+    [self jumptoValue];
     [self.player play];
-     
+   
 }
 
 
@@ -133,21 +158,15 @@
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //停止
-    [self.player pause];
-    
-    CMTime time = self.player.currentTime;
-    NSTimeInterval cur_time =  time.value / time.timescale;
-    int seconds = ((int)cur_time)%(3600*24)%3600%60 * 1000; //毫秒
-    [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
-    
-  
+    [self sendCurTimeMsg];
     
 }
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL restored))completionHandler
 {
-//回到APP
-    [self.pluginCallBack  sendCmd :@"-2" ];
-    
+    //回到APP
+    if([self.flg isEqual:@"show"]){
+     [self.pluginCallBack  sendCmd :@"-2" ];
+    }
 }
 
 

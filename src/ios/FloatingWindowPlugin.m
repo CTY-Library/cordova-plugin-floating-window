@@ -11,6 +11,8 @@
 
 @interface FloatingWindowPlugin : CDVPlugin {
     NSString *urlString;
+    float times_cur; //毫秒，跳转到当前时间播放
+    NSInteger landscape; //1横屏 ， 0竖屏
 }
 @property (nonatomic ,strong) NSString *callback_cur;
 //@property (nonatomic ,strong) CDVPluginResult *pluginResult;
@@ -33,10 +35,14 @@ static FloatingWindowPlugin *selfplugin = nil;
 
 - (void)show:(CDVInvokedUrlCommand *)command
 {
-     urlString = [command.arguments objectAtIndex:0];
+    urlString = [command.arguments objectAtIndex:0];
+    NSString *str_times_cur = [command.arguments objectAtIndex:1];
+    NSString *str_landscape = [command.arguments objectAtIndex:2];
+    times_cur =  [str_times_cur  floatValue];
+    landscape = [str_landscape integerValue];
     
     [self.floatv1 viewDidLoad];
-    [self.floatv1 setUpPlayer:urlString];
+    [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape];
 
  
     myAsyncCallBackId = command.callbackId;
@@ -74,7 +80,16 @@ static FloatingWindowPlugin *selfplugin = nil;
 
 - (void)close:(CDVInvokedUrlCommand *)command
 {
-     
+    selfplugin = self;
+    
+    [self.floatv1 close];
+    
+    myAsyncCallBackId = command.callbackId;
+    
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT ];
+    [pluginResult setKeepCallbackAsBool:YES]; //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
+    [self.commandDelegate sendPluginResult: pluginResult callbackId: command.callbackId];
+ 
 }
  
 @end
