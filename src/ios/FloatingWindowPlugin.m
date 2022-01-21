@@ -35,6 +35,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 
 - (void)show:(CDVInvokedUrlCommand *)command
 {
+    selfplugin = self;
     urlString = [command.arguments objectAtIndex:0];
     NSString *str_times_cur = [command.arguments objectAtIndex:1];
     NSString *str_landscape = [command.arguments objectAtIndex:2];
@@ -46,7 +47,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 
  
     myAsyncCallBackId = command.callbackId;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"" ];
+    pluginResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
 }
@@ -68,7 +69,7 @@ static FloatingWindowPlugin *selfplugin = nil;
     selfplugin = self;
     [self.floatv1 show];
     
-    myAsyncCallBackId = command.callbackId; 
+    myAsyncCallBackId = command.callbackId;
     
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: @"-1" ];
     [pluginResult setKeepCallbackAsBool:YES]; //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
@@ -93,3 +94,4 @@ static FloatingWindowPlugin *selfplugin = nil;
 }
  
 @end
+

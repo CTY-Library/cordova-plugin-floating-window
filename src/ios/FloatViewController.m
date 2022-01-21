@@ -1,6 +1,6 @@
 //
 //  FloatViewController.m
-//  
+//
 //
 //  Created by noah on 2022/1/13.
 //
@@ -19,6 +19,9 @@
 
 @property(nonatomic,strong) NSString * flg;
 
+@property(nonatomic,strong) AVPlayerItem * playerItem;
+
+
 
 @property(nonatomic,strong) AVPictureInPictureController * picController;
 
@@ -28,6 +31,7 @@
 @end
 
 static float   paly_times_cur;
+static const NSString *ItemStatusContext;
 
 @implementation FloatViewController
 
@@ -56,12 +60,20 @@ static float   paly_times_cur;
     [self.playerView setTag:20];
     
     [_window addSubview:_playerView];
+     
     
+    AVAsset *asset = [AVAsset assetWithURL: [NSURL URLWithString:video_url]];
+    AVPlayerItem * playerItem = [[AVPlayerItem alloc] initWithAsset:asset  automaticallyLoadedAssetKeys:@[@"duration"]];
+  
+     
+    //添加监听
+    [playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
+    [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
+
+     
+    self.player = [AVPlayer   playerWithPlayerItem:playerItem];
     
-    AVPlayerItem * item = [[AVPlayerItem alloc] initWithURL:[NSURL fileURLWithPath:video_url]];
-    
-    self.player = [AVPlayer playerWithPlayerItem:item];
-    AVPlayerLayer * layer = [AVPlayerLayer playerLayerWithPlayer:self.player];
+    AVPlayerLayer * layer = [AVPlayerLayer   playerLayerWithPlayer:self.player];
     
     layer.frame = self.playerView.bounds;
     layer.backgroundColor = [UIColor blueColor].CGColor;
@@ -73,6 +85,25 @@ static float   paly_times_cur;
     self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
     self.picController.delegate = self;
     self.picController.requiresLinearPlayback = true; //隐藏快进按钮
+}
+ 
+
+//监听视频加载回调
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context
+{
+    AVPlayerItem *playerItem = (AVPlayerItem *)object;
+
+    if ([keyPath isEqualToString:@"loadedTimeRanges"]){
+        
+    }else if ([keyPath isEqualToString:@"status"]){
+        if (playerItem.status == AVPlayerItemStatusReadyToPlay){
+            //NSLog(@"playerItem is ready");
+            [self.pluginCallBack  sendCmd: @"" ];
+          
+        } else{
+            NSLog(@"load break");
+        }
+    }
 }
 
 
@@ -99,7 +130,7 @@ static float   paly_times_cur;
 -(void)viewDidAppear:(BOOL)animated
 {
 
-    [super viewDidAppear:animated]; 
+    [super viewDidAppear:animated];
 }
 
 //跳转到指定的秒数
@@ -139,8 +170,9 @@ static float   paly_times_cur;
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //开启
-    [self jumptoValue];
+    
     [self.player play];
+    [self jumptoValue];
    
 }
 
@@ -172,3 +204,4 @@ static float   paly_times_cur;
 
 
 @end
+
