@@ -61,4 +61,5 @@ FloatingWindowPlugin.show(
 如果是同一个URL，第二次打开可直接调用 FloatingWindowPlugin.get 方法  
 
 ![avatar](/demo/picture/1.jpg)
+![avatar](/demo/picture/2.png)
 
