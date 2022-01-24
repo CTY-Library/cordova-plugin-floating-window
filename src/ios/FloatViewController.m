@@ -145,15 +145,36 @@ static const NSString *ItemStatusContext;
 }
 
  
+ 
 -(void) sendCurTimeMsg {
     [self.player pause];
+    [self.player setRate: 0];
     
     CMTime time = self.player.currentTime;
     NSTimeInterval cur_time =  time.value / time.timescale;
     int seconds = ((int)cur_time)%(3600*24)%3600%60 * 1000; //毫秒
-    [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
     
+    //释放资源
+    [self.playerItem removeObserver:self forKeyPath:@"status"];
+    [self.playerItem removeObserver:self forKeyPath:@"loadedTimeRanges"];
+    [self.playerItem cancelPendingSeeks ];
+    [self.playerItem.asset cancelLoading];
+    self.playerItem = nil;
+    [self.player.currentItem.asset cancelLoading];
+    [self.player.currentItem cancelPendingSeeks];
+    [self.player replaceCurrentItemWithPlayerItem: nil];
+    self.player = nil;
+    
+    //self.playerView = nil;
+    //self.picController = nil;
+    
+    [self.playerView removeFromSuperview];
+    //[self removeFromParentViewController];
+    
+    [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
+   
 }
+
 
 #pragma mark - delegate
 
@@ -185,12 +206,13 @@ static const NSString *ItemStatusContext;
 
 - (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
-
+    //停止ing
+   [self sendCurTimeMsg];
 }
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //停止
-    [self sendCurTimeMsg];
+ 
     
 }
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:(void (^)(BOOL restored))completionHandler
