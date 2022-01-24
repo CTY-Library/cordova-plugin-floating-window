@@ -1,12 +1,15 @@
 开启悬浮窗播放视频
 
-0.添加插件命令  
-`cordova plugins  add  https://github.com/lounai-chen/cordova-plugin-floating-window.git`  
+0.添加插件命令 
+``` 
+cordova plugins  add  https://github.com/lounai-chen/cordova-plugin-floating-window.git  
+
+```
 
     
 
 
-1. 安卓 src\main\AndroidManifest.xml 文件 , 需手动添加以下到相应位置  
+1.1 安卓 src\main\AndroidManifest.xml 文件 , 需手动添加以下到相应位置  
 
  ```
  <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>  
@@ -14,7 +17,7 @@
 
  <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>  
 ```  
-IOS 需手动 Signing & Capabilities 面板， 添加 Background Modes ,并选中第一个复选框 Audio, AirPlay, And Picture in Picture  
+1.2 IOS 需手动 Signing & Capabilities 面板， 添加 Background Modes ,并选中第一个复选框 Audio, AirPlay, And Picture in Picture  
 
 
 
@@ -32,6 +35,7 @@ FloatingWindowPlugin.show(
     300 //毫秒,跳到当前时间播放
 );
 ```
+
 
 
 2.2 使用案例 (ios)

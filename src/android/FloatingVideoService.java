@@ -75,8 +75,8 @@ public class FloatingVideoService extends Service  {
     layoutParams.gravity = Gravity.LEFT | Gravity.TOP;
     layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
     
-    layoutParams.x = 300;
-    layoutParams.y = 300;
+    layoutParams.x = 100;
+    layoutParams.y = 100;
 
     if(landscape==1){
       layoutParams.width = 800;
