@@ -134,7 +134,7 @@ public class FloatingVideoService extends Service  {
         //自定义触屏移动事件
         touchType = TOUCH_MOVE;
       }
-     // touchType = TOUCH_MOVE;
+      // touchType = TOUCH_MOVE;
     }
     //若发生按下原始事件
     else if(action == MotionEvent.ACTION_DOWN){
@@ -283,7 +283,6 @@ public class FloatingVideoService extends Service  {
         }
       });
 
-
       // 关闭悬浮窗并且回到主窗口事件
       ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
       goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
@@ -297,22 +296,46 @@ public class FloatingVideoService extends Service  {
         }
       });
 
-//      surfaceView.setOnClickListener( new  ImageView.OnClickListener() {
-//        @Override
-//        public void onClick(View v) {
-//          iCountViewShow++;
-//          // 显示,隐藏 按钮
-//          if(iCountViewShow % 2 == 0) {
-//            closeImageView.setVisibility(View.VISIBLE);
-//            goMainImageView.setVisibility(View.VISIBLE);
-//          }else{
-//            closeImageView.setVisibility(View.GONE);
-//            goMainImageView.setVisibility(View.GONE);
-//          }
-//        }
-//      });
+      ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
+      playImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+           // 播放
+          mediaPlayer.start();
+          showPlayPaushBtn();
+        }
+      });
+
+      ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
+      pauseImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          // 暂停
+          mediaPlayer.pause();
+          showPlayPaushBtn();
+        }
+      });
+
 
       windowManager.addView(displayView, layoutParams);
+    }
+  }
+
+  public  void  showPlayPaushBtn(){
+    ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
+    ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
+    if(iCountViewShow % 2 == 0) {
+      if (mediaPlayer.isPlaying()) {
+        pauseImageView.setVisibility(View.VISIBLE);
+        playImageView.setVisibility(View.GONE);
+      } else {
+        pauseImageView.setVisibility(View.GONE);
+        playImageView.setVisibility(View.VISIBLE);
+      }
+    }
+    else {
+      pauseImageView.setVisibility(View.GONE);
+      playImageView.setVisibility(View.GONE);
     }
   }
 
@@ -323,9 +346,6 @@ public class FloatingVideoService extends Service  {
 
     @Override
     public boolean onTouch(View view, MotionEvent event) {
-      ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
-      ImageView closeImageView =   displayView.findViewById(R.id.iv_close_window);
-
       //通过调用customTouchType方法，得到我们自定义的事件类型
       int touchType = customTouchType(event);
       //若自定义触屏事件是触屏移动
@@ -371,10 +391,12 @@ public class FloatingVideoService extends Service  {
           layoutParams.height = layoutParamsWidth*iCountViewBigger;
         }
         windowManager.updateViewLayout(view, layoutParams);
-       // Log.println( Log.ERROR,"","TOUCH_DOUBLE_CLICK:"+iCountViewBigger+",width:"+layoutParams.width+",height:"+layoutParams.height);
+        // Log.println( Log.ERROR,"","TOUCH_DOUBLE_CLICK:"+iCountViewBigger+",width:"+layoutParams.width+",height:"+layoutParams.height);
       }
       else if( touchType == TOUCH_CLICK){
         iCountViewShow++;
+        ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
+        ImageView closeImageView =   displayView.findViewById(R.id.iv_close_window);
         // 显示,隐藏 按钮
         if(iCountViewShow % 2 == 0) {
           closeImageView.setVisibility(View.VISIBLE);
@@ -383,6 +405,7 @@ public class FloatingVideoService extends Service  {
           closeImageView.setVisibility(View.GONE);
           goMainImageView.setVisibility(View.GONE);
         }
+        showPlayPaushBtn();
       }
 
       return true;
