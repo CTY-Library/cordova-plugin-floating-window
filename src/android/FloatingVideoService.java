@@ -62,7 +62,7 @@ public class FloatingVideoService extends Service  {
   public static int  landscape = 1;
 
   public static int layoutParamsWidth = 255;
-  public static int layoutParamsHeight = 130;
+  public static int layoutParamsHeight = 146;
   public static int  isUpAdd = 1;
   public static int  iCountViewBigger = 2;
   public static int  iCountViewShow = 1;
