@@ -152,7 +152,7 @@ static const NSString *ItemStatusContext;
     
     CMTime time = self.player.currentTime;
     NSTimeInterval cur_time =  time.value / time.timescale;
-    int seconds = ((int)cur_time)%(3600*24)%3600%60 * 1000;* 1000 //毫秒 * 1000
+    int seconds = ((int)cur_time) * 1000 * 1000; //微秒 
     
     //释放资源
     [self.playerItem removeObserver:self forKeyPath:@"status"];

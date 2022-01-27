@@ -5,7 +5,9 @@ import android.app.Service;
 import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -38,6 +40,11 @@ import org.apache.cordova.CordovaInterface;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.TimerTask;
+
+import android.widget.SeekBar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by noah chen on 2022/1/5.
@@ -76,6 +83,11 @@ public class FloatingVideoService extends Service  {
 
   private long touchDownTime = -1;//触点按下时间
   private long lastSingleClickTime = -1;//上次发生点击的时刻
+
+  public static SeekBar seekbar;
+  public static boolean isChanging=false;//互斥变量，防止定时器与SeekBar拖动时进度冲突
+  public static Timer mTimer;
+  public static TimerTask mTimerTask;
 
   @Override
   public void onCreate() {
@@ -209,7 +221,7 @@ public class FloatingVideoService extends Service  {
         this_cordova.getActivity().getBaseContext().stopService(it);
         video_display_relativeLayout.setVisibility(View.GONE);    // 隐藏 view
         isStarted = false;
-        long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+        long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
         FloatingWindowPlugin.callJS(""+cur_times);
         videoUrl = "-1";
         mediaPlayer.pause();
@@ -232,10 +244,26 @@ public class FloatingVideoService extends Service  {
       FloatingWindowPlugin.callJS("-1");
       //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
 
+      seekbar.setMax(mediaPlayer.getDuration());//设置进度条
+      //----------定时器记录播放进度---------//
+      mTimer = new Timer();
+      mTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+          if(isChanging==true) {
+            return;
+          }
+          seekbar.setProgress(mediaPlayer.getCurrentPosition());
+        }
+      };
+      mTimer.schedule(mTimerTask, 0, 10);
+
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
+
+
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   // @RequiresApi(api = Build.VERSION_CODES.O)
@@ -249,6 +277,10 @@ public class FloatingVideoService extends Service  {
       displayView.setOnTouchListener(new FloatingOnTouchListener());
       mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
       SurfaceView surfaceView = displayView.findViewById(R.id.video_display_surfaceview);
+      seekbar = (SeekBar) displayView.findViewById(R.id.seekbar);
+      seekbar.getThumb().setColorFilter(Color.parseColor("#F5F5F5"), PorterDuff.Mode.SRC_ATOP);
+      seekbar.getProgressDrawable().setColorFilter(Color.parseColor("#FFFFFF"),PorterDuff.Mode.SRC_ATOP);
+
       final SurfaceHolder surfaceHolder = surfaceView.getHolder();
       surfaceHolder.addCallback(new SurfaceHolder.Callback() {
         @Override
@@ -325,6 +357,7 @@ public class FloatingVideoService extends Service  {
     ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
     ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
     if(iCountViewShow % 2 == 0) {
+      //显示
       if (mediaPlayer.isPlaying()) {
         pauseImageView.setVisibility(View.VISIBLE);
         playImageView.setVisibility(View.GONE);
@@ -334,6 +367,7 @@ public class FloatingVideoService extends Service  {
       }
     }
     else {
+      //隐藏
       pauseImageView.setVisibility(View.GONE);
       playImageView.setVisibility(View.GONE);
     }
@@ -397,13 +431,16 @@ public class FloatingVideoService extends Service  {
         iCountViewShow++;
         ImageView  goMainImageView =   displayView.findViewById(R.id.iv_zoom_main_btn);
         ImageView closeImageView =   displayView.findViewById(R.id.iv_close_window);
-        // 显示,隐藏 按钮
         if(iCountViewShow % 2 == 0) {
+          //显示按钮
           closeImageView.setVisibility(View.VISIBLE);
           goMainImageView.setVisibility(View.VISIBLE);
+          seekbar.setVisibility(View.VISIBLE);
         }else{
+          //隐藏按钮
           closeImageView.setVisibility(View.GONE);
           goMainImageView.setVisibility(View.GONE);
+          seekbar.setVisibility(View.GONE);
         }
         showPlayPaushBtn();
       }
