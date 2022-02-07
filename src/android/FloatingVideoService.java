@@ -88,6 +88,9 @@ public class FloatingVideoService extends Service  {
   public static boolean isChanging=false;//互斥变量，防止定时器与SeekBar拖动时进度冲突
   public static Timer mTimer;
   public static TimerTask mTimerTask;
+  public static  AudioManager am ;
+  public  static int maxWidth;
+  public  static int maxHeight;
 
   @Override
   public void onCreate() {
@@ -116,6 +119,14 @@ public class FloatingVideoService extends Service  {
     }
 
     mediaPlayer = new MediaPlayer();
+
+    Display defaultDisplay = windowManager.getDefaultDisplay ();
+    Point point = new Point();
+    defaultDisplay.getSize(point);
+    FloatingVideoService.maxWidth = point.x;
+    FloatingVideoService.maxHeight = point.y;
+
+    am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
   }
 
   @Nullable
@@ -455,12 +466,20 @@ public class FloatingVideoService extends Service  {
         }else{
           iCountViewBigger--;
         }
+        int cur_width =layoutParamsWidth*iCountViewBigger;
+        int cur_height = layoutParamsHeight*iCountViewBigger;
+        if(cur_width>maxWidth-20){
+          cur_width = maxWidth-20;
+        }
+        if(cur_height>maxHeight-20){
+          cur_height = maxHeight-20;
+        }
         if(landscape==1){
-          layoutParams.width = layoutParamsWidth*iCountViewBigger;
-          layoutParams.height = layoutParamsHeight*iCountViewBigger;
+          layoutParams.width = cur_width;
+          layoutParams.height = cur_height;
         }else{
-          layoutParams.width = layoutParamsHeight*iCountViewBigger;
-          layoutParams.height = layoutParamsWidth*iCountViewBigger;
+          layoutParams.width = cur_height;
+          layoutParams.height = cur_width;
         }
         windowManager.updateViewLayout(view, layoutParams);
         // Log.println( Log.ERROR,"","TOUCH_DOUBLE_CLICK:"+iCountViewBigger+",width:"+layoutParams.width+",height:"+layoutParams.height);
