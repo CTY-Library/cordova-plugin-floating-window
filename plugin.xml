@@ -18,11 +18,12 @@
       <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW"/>  
       <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
       <uses-permission android:name="android.permission.REORDER_TASKS" />
+ 
     </config-file>
     <source-file src="src/android/FloatingWindowPlugin.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
     <source-file src="src/android/FloatingMainActivity.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
     <source-file src="src/android/FloatingVideoService.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
-     <source-file src="src/android/FloatingSystemHelper.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
+    <source-file src="src/android/FloatingSystemHelper.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
     
     <source-file src="src/android/res/layout/video_display.xml" target-dir="src/main/res/layout"/>   
     <source-file src="src/android/res/mipmap-xxhdpi/nn_paster_btn_close.png" target-dir="src/main/res/mipmap-xxhdpi"/>  

@@ -234,12 +234,50 @@ public class FloatingVideoService extends Service  {
   public static void showVideo(){
     try {
 
+
+      //注册OnAudioFocusChangeListener监听
+      AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        public void onAudioFocusChange(int focusChange) {
+          if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+            if (mediaPlayer.isPlaying()) {
+              mediaPlayer.pause();
+            }
+          }
+//          else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+//            if (mediaPlayer == null) {
+//
+//            } else if (!mediaPlayer.isPlaying()) {
+//
+//              mediaPlayer.start();
+//
+//            }
+//            // Resume playback
+//          } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+//            if (mediaPlayer.isPlaying()) {
+//
+//              mediaPlayer.stop();
+//            }
+//           // am.abandonAudioFocus(afChangeListener);
+//          }
+        }
+      };
+
+      AudioManager mManager = (AudioManager)this_context.getSystemService(Context.AUDIO_SERVICE);
+      int result = mManager.requestAudioFocus(afChangeListener,
+        AudioManager.STREAM_MUSIC,
+        AudioManager.AUDIOFOCUS_GAIN);
+
+
+
       isStarted = true;
       videoUrl_old = videoUrl;
       mediaPlayer.reset();
       mediaPlayer.setDataSource(this_context, Uri.parse(videoUrl));
       mediaPlayer.prepare(); //.prepareAsync(); //
-      mediaPlayer.start();
+      //mediaPlayer.start();
+      if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+        mediaPlayer.start();
+      }
       mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
       FloatingWindowPlugin.callJS("-1");
       //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
