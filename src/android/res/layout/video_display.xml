@@ -65,6 +65,35 @@
     android:src="@mipmap/pause_2"
     android:visibility="gone" />
 
+  <!--快进-->
+  <ImageView
+    android:id="@+id/iv_speed_btn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentRight="true"
+    android:layout_gravity="center|center_horizontal"
+    android:layout_marginRight="25dp"
+    android:layout_marginBottom="25dp"
+    android:clickable="true"
+    android:orientation="vertical"
+    android:src="@mipmap/speed"
+    android:visibility="gone" />
+
+  <!--快退-->
+  <ImageView
+    android:id="@+id/iv_reverse_btn"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_gravity="center|center_horizontal"
+    android:layout_marginLeft="25dp"
+    android:layout_marginBottom="25dp"
+    android:clickable="true"
+    android:orientation="vertical"
+    android:src="@mipmap/reverse"
+    android:visibility="gone" />
+
   <!--进度条-->
   <SeekBar
     android:id="@+id/seekbar"

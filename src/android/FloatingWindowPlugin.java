@@ -42,8 +42,9 @@ public class FloatingWindowPlugin extends CordovaPlugin {
     if (action.equals("show")) {
       mCallbackContext = callbackContext;    //拿到回调对象并保存
       int times_cur = Integer.parseInt(args.getString(1)); //毫秒,跳到当前时间播放
-      int landscape = Integer.parseInt(args.getString(2)); // 1横屏,0竖屏 
-      fma.initStartFloatingVideoService(landscape,video_url,times_cur,this.webView.getView(),mActContext,this.cordova,this);
+      int landscape = Integer.parseInt(args.getString(2)); // 1横屏,0竖屏
+      int is_speed = Integer.parseInt(args.getString(3)); // 1可以快进
+      fma.initStartFloatingVideoService(is_speed,landscape,video_url,times_cur,this.webView.getView(),mActContext,this.cordova,this);
       return true;
     }
     //获取悬浮信息

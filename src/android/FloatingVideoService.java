@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -20,6 +21,7 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -89,8 +91,9 @@ public class FloatingVideoService extends Service  {
   public static Timer mTimer;
   public static TimerTask mTimerTask;
   public static  AudioManager am ;
-  public  static int maxWidth;
-  public  static int maxHeight;
+  public  static int maxWidth = 1668;
+  public  static int maxHeight = 2768;
+  public  static int is_speed = 0; // 1可以快进
 
   @Override
   public void onCreate() {
@@ -127,7 +130,10 @@ public class FloatingVideoService extends Service  {
     FloatingVideoService.maxHeight = point.y;
 
     am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
   }
+
+
 
   @Nullable
   @Override
@@ -318,6 +324,7 @@ public class FloatingVideoService extends Service  {
   // @RequiresApi(api = Build.VERSION_CODES.O)
   private void showFloatingWindow() {
     if (Settings.canDrawOverlays(this)) {
+
       LayoutInflater layoutInflater = LayoutInflater.from(this);
       displayView = layoutInflater.inflate(R.layout.video_display, null);
       video_display_relativeLayout = displayView.findViewById(R.id.video_display_relativeLayout);
@@ -397,6 +404,30 @@ public class FloatingVideoService extends Service  {
         }
       });
 
+      //快进
+      ImageView  speedImageView =   displayView.findViewById(R.id.iv_speed_btn);
+      speedImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          // 快进 15 秒
+          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+          int skt_time =  (int)(cur_times / 1000) + 15 * 1000;
+          mediaPlayer.seekTo(skt_time);
+        }
+      });
+
+      //快退
+      ImageView  reverseImageView =   displayView.findViewById(R.id.iv_reverse_btn);
+      reverseImageView.setOnClickListener(  new  ImageView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          // 快退 15 秒
+          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+          int skt_time =  (int)(cur_times / 1000) - 15 * 1000;
+          mediaPlayer.seekTo(skt_time);
+        }
+      });
+
 
       windowManager.addView(displayView, layoutParams);
     }
@@ -405,6 +436,8 @@ public class FloatingVideoService extends Service  {
   public  void  showPlayPaushBtn(){
     ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
     ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
+    ImageView  speedImageView =   displayView.findViewById(R.id.iv_speed_btn);
+    ImageView  reverseImageView =   displayView.findViewById(R.id.iv_reverse_btn);
     if(iCountViewShow % 2 == 0) {
       //显示
       if (mediaPlayer.isPlaying()) {
@@ -414,13 +447,20 @@ public class FloatingVideoService extends Service  {
         pauseImageView.setVisibility(View.GONE);
         playImageView.setVisibility(View.VISIBLE);
       }
+      if(is_speed==1) {
+        speedImageView.setVisibility(View.VISIBLE);
+        reverseImageView.setVisibility(View.VISIBLE);
+      }
     }
     else {
       //隐藏
       pauseImageView.setVisibility(View.GONE);
       playImageView.setVisibility(View.GONE);
+      speedImageView.setVisibility(View.GONE);
+      reverseImageView.setVisibility(View.GONE);
     }
   }
+
 
 
   private class FloatingOnTouchListener implements View.OnTouchListener {

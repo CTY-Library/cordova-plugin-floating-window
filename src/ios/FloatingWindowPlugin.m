@@ -13,6 +13,7 @@
     NSString *urlString;
     float times_cur; //毫秒，跳转到当前时间播放
     NSInteger landscape; //1横屏 ， 0竖屏
+    NSInteger is_speed; //1可以快进
 }
 @property (nonatomic ,strong) NSString *callback_cur;
 //@property (nonatomic ,strong) CDVPluginResult *pluginResult;
@@ -39,11 +40,13 @@ static FloatingWindowPlugin *selfplugin = nil;
     urlString = [command.arguments objectAtIndex:0];
     NSString *str_times_cur = [command.arguments objectAtIndex:1];
     NSString *str_landscape = [command.arguments objectAtIndex:2];
+    NSString *str_is_speed = [command.arguments objectAtIndex:3];
     times_cur =  [str_times_cur  floatValue];
     landscape = [str_landscape integerValue];
+    is_speed = [str_landscape integerValue];
     
     [self.floatv1 viewDidLoad];
-    [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape];
+    [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape i_is_speed:is_speed];
 
  
     myAsyncCallBackId = command.callbackId;

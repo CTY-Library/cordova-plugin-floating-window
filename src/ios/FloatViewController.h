@@ -11,7 +11,7 @@
 
 - (void) viewDidLoad;
 
-- (void) setUpPlayer : (NSString *)video_url i_times_cur:(float )i_times_cur   i_landscape:(NSInteger )i_landscape;
+- (void) setUpPlayer : (NSString *)video_url i_times_cur:(float )i_times_cur   i_landscape:(NSInteger )i_landscape  i_is_speed:(NSInteger )i_is_speed;
 
 - (void) show;
 

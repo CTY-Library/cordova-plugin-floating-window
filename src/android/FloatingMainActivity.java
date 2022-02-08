@@ -3,12 +3,14 @@ package com.plugin.floatv1.floatingwindow;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Display;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,6 +21,8 @@ import com.zhongzilian.chestnutapp.R;
 import org.apache.cordova.CordovaActivity;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
+
+import static com.plugin.floatv1.floatingwindow.FloatingVideoService.mediaPlayer;
 
 /**
  * Created by noah chen on 2022/1/5.
@@ -50,11 +54,11 @@ public  class FloatingMainActivity extends CordovaActivity {
 
   @RequiresApi(api = Build.VERSION_CODES.M)
   public long getVideoDuration(){
-    return FloatingVideoService.mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+    return mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
-  public  void initStartFloatingVideoService(int landscape ,String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
+  public  void initStartFloatingVideoService(int is_speed,int landscape ,String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
 
     FloatingVideoService.videoUrl = video_url;
     FloatingVideoService.this_context = context;
@@ -62,6 +66,8 @@ public  class FloatingMainActivity extends CordovaActivity {
     FloatingVideoService.this_view = view;
     FloatingVideoService.times_cur = times_cur;
     FloatingVideoService.landscape = landscape;
+    FloatingVideoService.is_speed = is_speed;
+
 
     if (FloatingVideoService.isStarted) {
       FloatingVideoService.showVideo();

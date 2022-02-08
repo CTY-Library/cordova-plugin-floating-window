@@ -32,7 +32,8 @@ FloatingWindowPlugin.show(
         alert('失败'+r)
     },
     'https://xxx.aliyuncs.com/media/media1.mp4',
-    300 //毫秒,跳到当前时间播放
+    300, //毫秒,跳到当前时间播放
+    1    //可以快进
 );
 ```
 
@@ -55,7 +56,7 @@ FloatingWindowPlugin.show(
         alert('失败'+r)
     },
     'https://xxx.aliyuncs.com/media/media1.mp4',
-    300 //毫秒,跳到当前时间播放
+    300,1 //毫秒,跳到当前时间播放
 );
 ```
 如果是同一个URL，第二次打开可直接调用 FloatingWindowPlugin.get 方法  
