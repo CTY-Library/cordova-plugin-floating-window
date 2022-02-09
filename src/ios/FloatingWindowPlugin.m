@@ -43,7 +43,7 @@ static FloatingWindowPlugin *selfplugin = nil;
     NSString *str_is_speed = [command.arguments objectAtIndex:3];
     times_cur =  [str_times_cur  floatValue];
     landscape = [str_landscape integerValue];
-    is_speed = [str_landscape integerValue];
+    is_speed = [str_is_speed integerValue];
     
     [self.floatv1 viewDidLoad];
     [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape i_is_speed:is_speed];
