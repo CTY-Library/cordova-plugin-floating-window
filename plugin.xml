@@ -27,7 +27,11 @@
     
     <source-file src="src/android/res/layout/video_display.xml" target-dir="src/main/res/layout"/>   
     <source-file src="src/android/res/mipmap-xxhdpi/nn_paster_btn_close.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
-    <source-file src="src/android/res/mipmap-xxhdpi/nn_paster_btn_scale.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
+    <source-file src="src/android/res/mipmap-xxhdpi/nn_paster_btn_scale.png" target-dir="src/main/res/mipmap-xxhdpi"/>
+    <source-file src="src/android/res/mipmap-xxhdpi/play_2.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
+    <source-file src="src/android/res/mipmap-xxhdpi/pause_2.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
+    <source-file src="src/android/res/mipmap-xxhdpi/reverse.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
+    <source-file src="src/android/res/mipmap-xxhdpi/speed.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
 
     <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>
 
