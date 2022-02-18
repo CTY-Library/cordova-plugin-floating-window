@@ -250,9 +250,7 @@ public class FloatingVideoService extends Service  {
 
   public static void showVideo(){
     try {
-
-
-      //注册OnAudioFocusChangeListener监听
+      //注册OnAudioFocusChangeListener监听(有其他音视频播放)
       AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
         public void onAudioFocusChange(int focusChange) {
           if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
@@ -260,16 +258,13 @@ public class FloatingVideoService extends Service  {
               mediaPlayer.pause();
             }
           }
-//          else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-//            if (mediaPlayer == null) {
-//
-//            } else if (!mediaPlayer.isPlaying()) {
-//
-//              mediaPlayer.start();
-//
-//            }
-//            // Resume playback
-//          } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+          else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+             if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+              mediaPlayer.start();
+            }
+            // Resume playback
+          }
+//          else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
 //            if (mediaPlayer.isPlaying()) {
 //
 //              mediaPlayer.stop();
