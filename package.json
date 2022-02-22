@@ -1,7 +1,7 @@
 {
   "name": "cordova-plugin-floating-window",
-  "version": "2.1.2",
-  "description": "a cordova plugin, a JS version of baiduasrtts",
+  "version": "3.0.0",
+  "description": "a cordova plugin,floating window",
   "cordova": {
     "id": "cordova-plugin-floating-window",
     "platforms": [
