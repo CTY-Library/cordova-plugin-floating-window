@@ -94,6 +94,7 @@ public class FloatingVideoService extends Service  {
   public  static int maxWidth = 1668;
   public  static int maxHeight = 2768;
   public  static int is_speed = 0; // 1可以快进
+  public static  long  total_duration = 0 ; // 媒体文件总时长 , milliseconds 毫秒
 
   @Override
   public void onCreate() {
@@ -291,6 +292,7 @@ public class FloatingVideoService extends Service  {
         mediaPlayer.start();
       }
       mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
+      total_duration =  mediaPlayer.getDuration();//获取媒体文件总时长,milliseconds 毫秒
       FloatingWindowPlugin.callJS("-1");
       //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
 
@@ -312,7 +314,6 @@ public class FloatingVideoService extends Service  {
       e.printStackTrace();
     }
   }
-
 
 
   @RequiresApi(api = Build.VERSION_CODES.M)
@@ -371,21 +372,35 @@ public class FloatingVideoService extends Service  {
       goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
-
           /**将被挤压到后台的本应用重新置顶到最前端
            * 当自己的应用在后台时，将它切换到前台来*/
           FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext());
-          FloatingWindowPlugin.callJS("-2");
+
+          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+          if(is_speed==0 && cur_times >= total_duration * 1000){
+            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
+          }
+          else {
+            FloatingWindowPlugin.callJS("-2"); // -2: 视频还未播放结束,跳转到视频页
+          }
+
         }
       });
 
+      //播放按钮
       ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
       playImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
-           // 播放
-          mediaPlayer.start();
-          showPlayPaushBtn();
+          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+          if(is_speed==0 &&  cur_times >= total_duration * 1000){
+            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
+          }
+          else {
+            // 播放
+            mediaPlayer.start();
+            showPlayPaushBtn();
+          }
         }
       });
 
