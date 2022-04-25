@@ -21,7 +21,7 @@
 
 @property(nonatomic,strong) AVPlayerItem * playerItem;
 
-
+ 
 
 @property(nonatomic,strong) AVPictureInPictureController * picController;
 
@@ -30,7 +30,8 @@
 
 @end
 
-static float   paly_times_cur;
+static float  paly_times_cur;
+static int is_speed;
 static const NSString *ItemStatusContext;
 
 @implementation FloatViewController
@@ -84,10 +85,15 @@ static const NSString *ItemStatusContext;
 
     self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
     self.picController.delegate = self;
-    if(i_is_speed !=1 )
+    is_speed = i_is_speed;
+    if(is_speed !=1 )
     {
         self.picController.requiresLinearPlayback = true; //隐藏快进按钮
     }
+    
+    //给AVPlayerItem添加播放完成通知
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+    
 }
  
 
@@ -178,6 +184,16 @@ static const NSString *ItemStatusContext;
    
 }
 
+-(void)playbackFinished:(NSNotification *)notification{
+    NSLog(@"视频播放完成");
+    self.flg = @"show";
+    is_speed = 1;
+    self.picController.requiresLinearPlayback = false; //显示快进按钮
+    [self.pluginCallBack  sendCmd :@"-100" ];// -100: 播放完毕
+    
+}
+
+
 
 #pragma mark - delegate
 
@@ -222,7 +238,20 @@ static const NSString *ItemStatusContext;
 {
     //回到APP
     if([self.flg isEqual:@"show"]){
-     [self.pluginCallBack  sendCmd :@"-2" ];
+        
+        
+    // [self.pluginCallBack  sendCmd :@"-2" ];
+        
+        CMTime time = self.player.currentTime;
+        float f_cur_seconds =  (time.value * 1000 * 0.001  / time.timescale * 1000 * 0.001 );
+        float cur_seconds = f_cur_seconds * 1000 * 1000 + 100; //微秒
+        long total_time = CMTimeGetSeconds( self.player.currentItem.asset.duration) * 1000 * 1000;
+        if(cur_seconds >= total_time ){
+            [self.pluginCallBack  sendCmd :@"-3" ];// -3: 当视频播放结束,跳转到答题页
+        }
+        else{
+            [self.pluginCallBack  sendCmd :@"-2" ];// -2: 视频还未播放结束,跳转到视频页
+        }
     }
 }
 

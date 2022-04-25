@@ -280,8 +280,6 @@ public class FloatingVideoService extends Service  {
         AudioManager.STREAM_MUSIC,
         AudioManager.AUDIOFOCUS_GAIN);
 
-
-
       isStarted = true;
       videoUrl_old = videoUrl;
       mediaPlayer.reset();
@@ -291,6 +289,8 @@ public class FloatingVideoService extends Service  {
       if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
         mediaPlayer.start();
       }
+
+
       mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
       total_duration =  mediaPlayer.getDuration();//获取媒体文件总时长,milliseconds 毫秒
       FloatingWindowPlugin.callJS("-1");
@@ -309,6 +309,18 @@ public class FloatingVideoService extends Service  {
         }
       };
       mTimer.schedule(mTimerTask, 0, 10);
+
+
+      mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        @Override
+        // 当前播放完毕
+        public void onCompletion(MediaPlayer mediaPlayer) {
+          is_speed = 1;
+          showPlayPaushBtn();
+          FloatingWindowPlugin.callJS("-100"); // -100 播放完毕
+        }
+      });
+
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -377,7 +389,7 @@ public class FloatingVideoService extends Service  {
           FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext());
 
           long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
-          if(is_speed==0 && cur_times >= total_duration * 1000){
+          if(cur_times >= total_duration * 1000){ //is_speed==0 &&
             FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
           }
           else {
@@ -392,15 +404,15 @@ public class FloatingVideoService extends Service  {
       playImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
-          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
-          if(is_speed==0 &&  cur_times >= total_duration * 1000){
-            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
-          }
-          else {
+//          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+//          if(is_speed==0 &&  cur_times >= total_duration * 1000){
+//            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
+//          }
+//          else {
             // 播放
             mediaPlayer.start();
             showPlayPaushBtn();
-          }
+         // }
         }
       });
 
@@ -443,7 +455,7 @@ public class FloatingVideoService extends Service  {
     }
   }
 
-  public  void  showPlayPaushBtn(){
+  public static void  showPlayPaushBtn(){
     ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
     ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
     ImageView  speedImageView =   displayView.findViewById(R.id.iv_speed_btn);
