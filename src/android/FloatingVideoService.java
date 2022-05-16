@@ -389,7 +389,7 @@ public class FloatingVideoService extends Service  {
           FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext());
 
           long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
-          if(cur_times >= total_duration * 1000){ //is_speed==0 &&
+          if(cur_times >= total_duration * 1000 - 3000){ //is_speed==0 && //处理视频关键帧误差
             FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
           }
           else {
