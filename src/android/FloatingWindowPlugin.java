@@ -2,7 +2,9 @@ package com.plugin.floatv1.floatingwindow;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
+
+
+import androidx.annotation.RequiresApi;
 
 import com.plugin.floatv1.floatingwindow.FloatingMainActivity;
 

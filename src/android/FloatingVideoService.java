@@ -2,7 +2,6 @@ package com.plugin.floatv1.floatingwindow;
 
 import android.app.Activity;
 import android.app.Service;
-import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,8 +17,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -45,6 +42,10 @@ import java.util.Date;
 import java.util.TimerTask;
 
 import android.widget.SeekBar;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -94,7 +95,6 @@ public class FloatingVideoService extends Service  {
   public  static int maxWidth = 1668;
   public  static int maxHeight = 2768;
   public  static int is_speed = 0; // 1可以快进
-  public static  long  total_duration = 0 ; // 媒体文件总时长 , milliseconds 毫秒
 
   @Override
   public void onCreate() {
@@ -280,6 +280,8 @@ public class FloatingVideoService extends Service  {
         AudioManager.STREAM_MUSIC,
         AudioManager.AUDIOFOCUS_GAIN);
 
+
+
       isStarted = true;
       videoUrl_old = videoUrl;
       mediaPlayer.reset();
@@ -289,10 +291,7 @@ public class FloatingVideoService extends Service  {
       if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
         mediaPlayer.start();
       }
-
-
       mediaPlayer.seekTo(times_cur); //毫秒,跳到当前时间播放
-      total_duration =  mediaPlayer.getDuration();//获取媒体文件总时长,milliseconds 毫秒
       FloatingWindowPlugin.callJS("-1");
       //this_cordova.getActivity().finish();//关闭主窗口,回到手机的首页
 
@@ -310,22 +309,11 @@ public class FloatingVideoService extends Service  {
       };
       mTimer.schedule(mTimerTask, 0, 10);
 
-
-      mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-        @Override
-        // 当前播放完毕
-        public void onCompletion(MediaPlayer mediaPlayer) {
-          is_speed = 1;
-          showPlayPaushBtn();
-          FloatingWindowPlugin.callJS("-100"); // -100 播放完毕
-        }
-      });
-
-
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
+
 
 
   @RequiresApi(api = Build.VERSION_CODES.M)
@@ -384,35 +372,21 @@ public class FloatingVideoService extends Service  {
       goMainImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
+
           /**将被挤压到后台的本应用重新置顶到最前端
            * 当自己的应用在后台时，将它切换到前台来*/
           FloatingSystemHelper.setTopApp(this_cordova.getActivity().getBaseContext());
-
-          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
-          if(cur_times >= total_duration * 1000 - 3000){ //is_speed==0 && //处理视频关键帧误差
-            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
-          }
-          else {
-            FloatingWindowPlugin.callJS("-2"); // -2: 视频还未播放结束,跳转到视频页
-          }
-
+          FloatingWindowPlugin.callJS("-2");
         }
       });
 
-      //播放按钮
       ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
       playImageView.setOnClickListener(  new  ImageView.OnClickListener() {
         @Override
         public void onClick(View v) {
-//          long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
-//          if(is_speed==0 &&  cur_times >= total_duration * 1000){
-//            FloatingWindowPlugin.callJS("-3");  // -3: 当视频播放结束,跳转到答题页
-//          }
-//          else {
-            // 播放
-            mediaPlayer.start();
-            showPlayPaushBtn();
-         // }
+           // 播放
+          mediaPlayer.start();
+          showPlayPaushBtn();
         }
       });
 
@@ -455,7 +429,7 @@ public class FloatingVideoService extends Service  {
     }
   }
 
-  public static void  showPlayPaushBtn(){
+  public  void  showPlayPaushBtn(){
     ImageView  playImageView =   displayView.findViewById(R.id.iv_play_btn);
     ImageView  pauseImageView =   displayView.findViewById(R.id.iv_pause_btn);
     ImageView  speedImageView =   displayView.findViewById(R.id.iv_speed_btn);
