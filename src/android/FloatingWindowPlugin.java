@@ -2,6 +2,7 @@ package com.plugin.floatv1.floatingwindow;
 
 import android.content.Context;
 import android.os.Build;
+import android.view.ViewGroup;
 
 
 import androidx.annotation.RequiresApi;
@@ -29,8 +30,14 @@ public class FloatingWindowPlugin extends CordovaPlugin {
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     super.initialize(cordova, webView);
-    fma = new FloatingMainActivity();
     mActContext = this.cordova.getActivity().getApplicationContext();
+
+    cordova.getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        fma = new FloatingMainActivity();
+      }
+    });
 
   }
 
