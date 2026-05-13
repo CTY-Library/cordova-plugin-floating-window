@@ -18,6 +18,7 @@
       <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW"/>  
       <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
       <uses-permission android:name="android.permission.REORDER_TASKS" />
+      <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
  
     </config-file>
     <source-file src="src/android/FloatingWindowPlugin.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
@@ -33,9 +34,10 @@
     <source-file src="src/android/res/mipmap-xxhdpi/reverse.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
     <source-file src="src/android/res/mipmap-xxhdpi/speed.png" target-dir="src/main/res/mipmap-xxhdpi"/>  
 
-    <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity"></activity>
-
-    <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>
+    <config-file parent="/manifest/application" target="AndroidManifest.xml">
+      <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity" android:exported="false" />
+      <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService" android:exported="false" />
+    </config-file>
 
   </platform>  
 

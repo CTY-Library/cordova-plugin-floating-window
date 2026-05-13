@@ -18,6 +18,10 @@ import android.os.IBinder;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import androidx.core.app.NotificationCompat;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -99,7 +103,24 @@ public class FloatingVideoService extends Service  {
   @Override
   public void onCreate() {
     super.onCreate();
+    Log.i("FloatingVideoService","onCreate: start");
+    // start as foreground service to keep alive on Android O+
+    String channelId = "floating_video_service_channel";
+    String channelName = "Floating Video Service";
+    NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW);
+      nm.createNotificationChannel(channel);
+    }
+    Notification notification = new NotificationCompat.Builder(this, channelId)
+      .setContentTitle("Floating video")
+      .setContentText("Floating video service is running")
+      .setSmallIcon(android.R.drawable.ic_media_play)
+      .setPriority(NotificationCompat.PRIORITY_LOW)
+      .build();
+    startForeground(4242, notification);
     isStarted = true;
+    Log.d("FloatingVideoService","onCreate: mediaPlayer initializing");
     windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
     layoutParams = new WindowManager.LayoutParams();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -145,7 +166,12 @@ public class FloatingVideoService extends Service  {
   @RequiresApi(api = Build.VERSION_CODES.M)
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    showFloatingWindow();
+    Log.i("FloatingVideoService","onStartCommand: intent="+ (intent==null?"null":intent.toString()) + " flags="+flags+" startId="+startId);
+    try{
+      showFloatingWindow();
+    }catch(Exception e){
+      Log.e("FloatingVideoService","onStartCommand failed", e);
+    }
     return super.onStartCommand(intent, flags, startId);
   }
 
@@ -208,7 +234,13 @@ public class FloatingVideoService extends Service  {
   @RequiresApi(api = Build.VERSION_CODES.M)
   public static void hideVideo()
   {
-    long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+    Log.i("FloatingVideoService","hideVideo: called");
+    long cur_times = 0;
+    try{
+      cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+    }catch(Exception e){
+      Log.w("FloatingVideoService","hideVideo: failed to get timestamp", e);
+    }
 
     videoUrl = "-1";
     times_old = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
@@ -222,6 +254,7 @@ public class FloatingVideoService extends Service  {
     displayView.clearFocus();
 
     isStarted = false;
+    Log.i("FloatingVideoService","hideVideo: stopped at " + cur_times);
 
     FloatingWindowPlugin.callJS(""+cur_times);
 
@@ -230,16 +263,19 @@ public class FloatingVideoService extends Service  {
   }
 
   public  static   void closeVideo() {
+    Log.i("FloatingVideoService","closeVideo: called");
     video_display_relativeLayout.postInvalidate();
     video_display_relativeLayout.post(new Runnable(){
       @RequiresApi(api = Build.VERSION_CODES.M)
       @Override
-      public void run() {
+        public void run() {
         Intent it = new Intent(this_cordova.getActivity().getBaseContext(), FloatingVideoService.class);
         this_cordova.getActivity().getBaseContext().stopService(it);
         video_display_relativeLayout.setVisibility(View.GONE);    // 隐藏 view
         isStarted = false;
-        long cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();//微秒
+        long cur_times = 0;
+        try{ cur_times = mediaPlayer.getTimestamp().getAnchorMediaTimeUs(); }catch(Exception e){ Log.w("FloatingVideoService","closeVideo: getTimestamp failed",e); }
+        Log.i("FloatingVideoService","closeVideo: stopped at " + cur_times);
         FloatingWindowPlugin.callJS(""+cur_times);
         videoUrl = "-1";
         mediaPlayer.pause();

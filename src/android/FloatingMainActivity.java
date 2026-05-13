@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 
 import android.view.Display;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -43,10 +44,17 @@ public  class FloatingMainActivity extends CordovaActivity {
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
     if (!Settings.canDrawOverlays(this)) {
+      Log.w("FloatingMainActivity", "onActivityResult: overlay permission NOT granted");
       Toast.makeText(this, "授权失败", Toast.LENGTH_SHORT).show();
     } else {
+      Log.i("FloatingMainActivity", "onActivityResult: overlay permission granted, starting service");
       Toast.makeText(this, "授权成功", Toast.LENGTH_SHORT).show();
-      startService(new Intent(FloatingMainActivity.this, FloatingVideoService.class));
+      Intent it = new Intent(FloatingMainActivity.this, FloatingVideoService.class);
+      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        startForegroundService(it);
+      } else {
+        startService(it);
+      }
     }
 
   }
@@ -54,34 +62,62 @@ public  class FloatingMainActivity extends CordovaActivity {
 
 
   @RequiresApi(api = Build.VERSION_CODES.M)
-  public long getVideoDuration(){
-    return mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+  public static long getVideoDuration(){
+    try{
+      long t = mediaPlayer.getTimestamp().getAnchorMediaTimeUs();
+      Log.d("FloatingMainActivity","getVideoDuration: " + t);
+      return t;
+    }catch(Exception e){
+      Log.w("FloatingMainActivity","getVideoDuration failed", e);
+      return 0;
+    }
   }
 
   @RequiresApi(api = Build.VERSION_CODES.M)
-  public  void initStartFloatingVideoService(int is_speed,int landscape ,String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
+  public static void initStartFloatingVideoService(int is_speed,int landscape ,String video_url,int times_cur, View view, Context context, CordovaInterface cordova,CordovaPlugin plg) {
+    try{
+      Log.i("FloatingMainActivity","initStartFloatingVideoService: video_url="+video_url+" is_speed="+is_speed+" landscape="+landscape+" times_cur="+times_cur);
+      FloatingVideoService.videoUrl = video_url;
+      FloatingVideoService.this_context = context;
+      FloatingVideoService.this_cordova = cordova;
+      FloatingVideoService.this_view = view;
+      FloatingVideoService.times_cur = times_cur;
+      FloatingVideoService.landscape = landscape;
+      FloatingVideoService.is_speed = is_speed;
 
-    FloatingVideoService.videoUrl = video_url;
-    FloatingVideoService.this_context = context;
-    FloatingVideoService.this_cordova = cordova;
-    FloatingVideoService.this_view = view;
-    FloatingVideoService.times_cur = times_cur;
-    FloatingVideoService.landscape = landscape;
-    FloatingVideoService.is_speed = is_speed;
+      if (FloatingVideoService.isStarted) {
+        Log.i("FloatingMainActivity","initStartFloatingVideoService: service already started, calling showVideo");
+        FloatingVideoService.showVideo();
+        return;
+      }
 
-
-    if (FloatingVideoService.isStarted) {
-      FloatingVideoService.showVideo();
-      return;
-    }
-
-    if (!Settings.canDrawOverlays(context)) {
-      Toast.makeText(context, "当前无权限，请授权", Toast.LENGTH_SHORT);
-      Intent it_power = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.getPackageName()));
-      cordova.startActivityForResult(plg, it_power, 2);
-    } else {
-      Intent it = new Intent(cordova.getActivity().getBaseContext(), FloatingVideoService.class);
-      cordova.getActivity().getBaseContext().startService(it);
+      if (!Settings.canDrawOverlays(context)) {
+        Log.w("FloatingMainActivity","initStartFloatingVideoService: overlay permission missing, requesting");
+        Toast.makeText(context, "当前无权限，请授权", Toast.LENGTH_SHORT);
+        final Intent it_power = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.getPackageName()));
+        // startActivityForResult must run on UI thread
+        try {
+          cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              cordova.startActivityForResult(plg, it_power, 2);
+            }
+          });
+        } catch (Exception e) {
+          Log.w("FloatingMainActivity","failed to request overlay permission on UI thread, calling directly", e);
+          try { cordova.startActivityForResult(plg, it_power, 2); } catch (Exception ex) { Log.e("FloatingMainActivity","startActivityForResult failed", ex); }
+        }
+      } else {
+        Log.i("FloatingMainActivity","initStartFloatingVideoService: permission present, starting service");
+        Intent it = new Intent(cordova.getActivity().getBaseContext(), FloatingVideoService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+          cordova.getActivity().getBaseContext().startForegroundService(it);
+        } else {
+          cordova.getActivity().getBaseContext().startService(it);
+        }
+      }
+    }catch(Throwable t){
+      Log.e("FloatingMainActivity","initStartFloatingVideoService failed", t);
     }
 
 
