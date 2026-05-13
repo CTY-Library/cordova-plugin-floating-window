@@ -26,7 +26,7 @@
 @property(nonatomic,strong) AVPictureInPictureController * picController;
 
 
-@property (nonatomic ,strong) FloatingWindowPlugin *pluginCallBack;
+// pluginCallBack provided via header property; don't redeclare here
 
 @end
 
@@ -46,8 +46,6 @@ static const NSString *ItemStatusContext;
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
     
-    _pluginCallBack = [[FloatingWindowPlugin alloc] init];
-    
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     //创建uiview对象
     _playerView = [[UIView alloc] init];
@@ -65,16 +63,17 @@ static const NSString *ItemStatusContext;
     
     AVAsset *asset = [AVAsset assetWithURL: [NSURL URLWithString:video_url]];
     AVPlayerItem * playerItem = [[AVPlayerItem alloc] initWithAsset:asset  automaticallyLoadedAssetKeys:@[@"duration"]];
-  
-     
-    //添加监听
-    [playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
-    [playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
 
-     
-    self.player = [AVPlayer   playerWithPlayerItem:playerItem];
-    
-    AVPlayerLayer * layer = [AVPlayerLayer   playerLayerWithPlayer:self.player];
+    // 保存到 self.playerItem 以便后续移除监听
+    self.playerItem = playerItem;
+
+    //添加监听
+    [self.playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
+    [self.playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
+
+    self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
+
+    AVPlayerLayer * layer = [AVPlayerLayer playerLayerWithPlayer:self.player];
     
     layer.frame = self.playerView.bounds;
     layer.backgroundColor = [UIColor blueColor].CGColor;
@@ -92,7 +91,7 @@ static const NSString *ItemStatusContext;
     }
     
     //给AVPlayerItem添加播放完成通知
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
     
 }
  
@@ -163,14 +162,22 @@ static const NSString *ItemStatusContext;
     NSTimeInterval cur_time =  time.value / time.timescale;
     int seconds = ((int)cur_time) * 1000 * 1000; //微秒 
     
-    //释放资源
-    [self.playerItem removeObserver:self forKeyPath:@"status"];
-    [self.playerItem removeObserver:self forKeyPath:@"loadedTimeRanges"];
-    [self.playerItem cancelPendingSeeks ];
-    [self.playerItem.asset cancelLoading];
-    self.playerItem = nil;
-    [self.player.currentItem.asset cancelLoading];
-    [self.player.currentItem cancelPendingSeeks];
+    //释放资源（安全移除观察者以避免 KVO 崩溃）
+    if (self.playerItem) {
+        @try {
+            [self.playerItem removeObserver:self forKeyPath:@"status"];
+        } @catch (NSException *exception) {}
+        @try {
+            [self.playerItem removeObserver:self forKeyPath:@"loadedTimeRanges"];
+        } @catch (NSException *exception) {}
+        [self.playerItem cancelPendingSeeks];
+        [self.playerItem.asset cancelLoading];
+        self.playerItem = nil;
+    }
+    if (self.player.currentItem) {
+        [self.player.currentItem.asset cancelLoading];
+        [self.player.currentItem cancelPendingSeeks];
+    }
     [self.player replaceCurrentItemWithPlayerItem: nil];
     self.player = nil;
     
@@ -253,6 +260,14 @@ static const NSString *ItemStatusContext;
             [self.pluginCallBack  sendCmd :@"-2" ];// -2: 视频还未播放结束,跳转到视频页
         }
     }
+}
+
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    if (self.supportedOrientations != 0) {
+        return self.supportedOrientations;
+    }
+    return UIInterfaceOrientationMaskAll;
 }
 
 

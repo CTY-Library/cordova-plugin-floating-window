@@ -9,7 +9,7 @@
 #import "FloatViewController.h"
 
 
-@interface FloatingWindowPlugin : CDVPlugin {
+@interface FloatingWindowPlugin : CDVPlugin <FloatingWindowPluginCallback> {
     NSString *urlString;
     float times_cur; //毫秒，跳转到当前时间播放
     NSInteger landscape; //1横屏 ， 0竖屏
@@ -44,15 +44,20 @@ static FloatingWindowPlugin *selfplugin = nil;
     times_cur =  [str_times_cur  floatValue];
     landscape = [str_landscape integerValue];
     is_speed = [str_is_speed integerValue];
-    
-    [self.floatv1 viewDidLoad];
-    [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape i_is_speed:is_speed];
-
- 
     myAsyncCallBackId = command.callbackId;
     pluginResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId: command.callbackId];
+
+    // Ensure callback reference is available to the view controller
+    self.floatv1.pluginCallBack = self;
+
+    // Do setup off the plugin main thread; UI parts are dispatched to main queue
+    [self.commandDelegate runInBackground:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.floatv1 setUpPlayer:urlString i_times_cur:times_cur i_landscape:landscape i_is_speed:is_speed];
+        });
+    }];
 }
 
 -  (void)  sendCmd : (NSString *)video_times
@@ -70,10 +75,13 @@ static FloatingWindowPlugin *selfplugin = nil;
 - (void)get:(CDVInvokedUrlCommand *)command
 {
     selfplugin = self;
-    [self.floatv1 show];
-    
+    // Ensure UI call on main thread
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.floatv1 show];
+    });
+
     myAsyncCallBackId = command.callbackId;
-    
+
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: @"-1" ];
     [pluginResult setKeepCallbackAsBool:YES]; //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
     [self.commandDelegate sendPluginResult: pluginResult callbackId: command.callbackId];
@@ -85,11 +93,13 @@ static FloatingWindowPlugin *selfplugin = nil;
 - (void)close:(CDVInvokedUrlCommand *)command
 {
     selfplugin = self;
-    
-    [self.floatv1 close];
-    
+    // Ensure UI call on main thread
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.floatv1 close];
+    });
+
     myAsyncCallBackId = command.callbackId;
-    
+
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT ];
     [pluginResult setKeepCallbackAsBool:YES]; //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
     [self.commandDelegate sendPluginResult: pluginResult callbackId: command.callbackId];
