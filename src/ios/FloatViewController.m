@@ -14,6 +14,8 @@
 @interface FloatViewController () <AVPictureInPictureControllerDelegate>
 
 @property(nonatomic,strong) AVPlayer * player;
+@property(nonatomic,strong) AVPlayerLayer *playerLayer;
+@property(nonatomic,assign) id timeObserverToken;
 
 @property (nonatomic ,strong)   UIWindow *window;
 @property (nonatomic ,strong)   UIView *playerView;
@@ -142,6 +144,8 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
             [sself.playerView.layer addSublayer:layer];
             layer.frame = sself.playerView.bounds;
             layer.needsDisplayOnBoundsChange = YES;
+            // 保存引用以便在 PiP 生命周期中控制显示/隐藏
+            sself.playerLayer = layer;
 
             sself.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
             sself.picController.delegate = sself;
@@ -182,7 +186,7 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
         NSLog(@"FloatViewController: loadedTimeRanges updated, count=%lu", (unsigned long)playerItem.loadedTimeRanges.count);
     }else if ([keyPath isEqualToString:@"status"]){
         NSLog(@"FloatViewController: playerItem status changed=%ld error=%@", (long)playerItem.status, playerItem.error.localizedDescription);
-        if (playerItem.status == AVPlayerItemStatusReadyToPlay){
+                if (playerItem.status == AVPlayerItemStatusReadyToPlay){
             //NSLog(@"playerItem is ready");
             // 通知 plugin 准备就绪
             [self.pluginCallBack  sendCmd: @"" ];
@@ -191,10 +195,24 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
                 [self.player play];
                 NSLog(@"FloatViewController: player play issued");
                 if (self.shouldStartPipWhenPossible && self.picController.isPictureInPicturePossible) {
-                    self.shouldStartPipWhenPossible = NO;
-                    self.flg = @"show";
-                    NSLog(@"FloatViewController: deferred startPictureInPicture now firing");
-                    [self.picController startPictureInPicture];
+                    // 延迟直到播放器已渲染首帧再启动 PiP，避免系统占位黑块
+                    __weak typeof(self) weakSelf2 = self;
+                    self.timeObserverToken = [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1, 30) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+                        __strong typeof(weakSelf2) sself2 = weakSelf2;
+                        if (!sself2) return;
+                        Float64 seconds = CMTimeGetSeconds(sself2.player.currentTime);
+                        if (seconds > 0) {
+                            // 已渲染首帧，移除观察并启动 PiP
+                            if (sself2.timeObserverToken) {
+                                [sself2.player removeTimeObserver:sself2.timeObserverToken];
+                                sself2.timeObserverToken = nil;
+                            }
+                            sself2.shouldStartPipWhenPossible = NO;
+                            sself2.flg = @"show";
+                            NSLog(@"FloatViewController: first frame rendered (%.3f), starting PiP", seconds);
+                            [sself2.picController startPictureInPicture];
+                        }
+                    }];
                 }
             });
           
@@ -287,6 +305,13 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
             [self.picController removeObserver:self forKeyPath:@"pictureInPicturePossible"];
         } @catch (NSException *exception) {}
     }
+    // 移除时间观察者（如果存在），防止内存/回调泄漏
+    if (self.timeObserverToken) {
+        @try {
+            [self.player removeTimeObserver:self.timeObserverToken];
+        } @catch (NSException *e) {}
+        self.timeObserverToken = nil;
+    }
     [self.player replaceCurrentItemWithPlayerItem: nil];
     self.player = nil;
     self.picController = nil;
@@ -336,6 +361,13 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
     @try {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
     } @catch (NSException *e) {}
+    // 移除周期性时间观察者
+    if (self.timeObserverToken) {
+        @try {
+            [self.player removeTimeObserver:self.timeObserverToken];
+        } @catch (NSException *e) {}
+        self.timeObserverToken = nil;
+    }
 }
 
 -(void)playbackFinished:(NSNotification *)notification{
@@ -365,7 +397,16 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
 {
 //开启
     NSLog(@"FloatViewController: pictureInPictureControllerDidStartPictureInPicture");
-    
+    // 隐藏应用内的 playerView/层，避免系统显示黑色占位提示
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.playerLayer) {
+            self.playerLayer.hidden = YES;
+        }
+        if (self.playerView) {
+            self.playerView.hidden = YES;
+        }
+    });
+
     [self.player play];
     [self jumptoValue];
    
@@ -376,6 +417,18 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
 {
     NSLog(@"FloatViewController: failedToStartPiP domain=%@ code=%ld reason=%@ desc=%@", error.domain, (long)error.code, error.localizedFailureReason, error.localizedDescription);
     NSLog(@"FloatViewController: fail context hostWindow=%@ appState=%@", self.hostViewController.view.window, FWVCAppStateString([UIApplication sharedApplication].applicationState));
+    // 如果启动失败，确保恢复在应用内显示
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.playerLayer) self.playerLayer.hidden = NO;
+        if (self.playerView) self.playerView.hidden = NO;
+    });
+    // 移除时间观察者（如果存在）
+    if (self.timeObserverToken) {
+        @try {
+            [self.player removeTimeObserver:self.timeObserverToken];
+        } @catch (NSException *e) {}
+        self.timeObserverToken = nil;
+    }
 }
 
 
@@ -411,6 +464,12 @@ static NSString *FWVCAppStateString(UIApplicationState state) {
             [self.pluginCallBack  sendCmd :@"-2" ];// -2: 视频还未播放结束,跳转到视频页
         }
     }
+    // 恢复应用内的播放视图显示，并通知系统已恢复 UI
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.playerLayer) self.playerLayer.hidden = NO;
+        if (self.playerView) self.playerView.hidden = NO;
+        if (completionHandler) completionHandler(YES);
+    });
 }
 
 
