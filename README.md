@@ -17,7 +17,18 @@ cordova plugins  add  https://github.com/lounai-chen/cordova-plugin-floating-win
 
  <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService"></service>  
 ```  
-1.2 IOS 需手动 Signing & Capabilities 面板， 添加 Background Modes ,并选中第一个复选框 Audio, AirPlay, And Picture in Picture  
+1.2 iOS 必要配置
+
+- 在 Xcode 的 Signing & Capabilities 面板，添加 Background Modes，并勾选 Audio, AirPlay, and Picture in Picture。
+- 宿主工程需要支持横竖屏（否则 iOS 16+ 的主动旋转会失败）。建议在宿主 `config.xml` 增加：
+
+```
+<platform name="ios">
+    <preference name="Orientation" value="all" />
+</platform>
+```
+
+- 插件已在 iOS 端使用 `UIWindowScene requestGeometryUpdate`（iOS 16+）主动请求方向切换；低版本自动使用 `attemptRotationToDeviceOrientation` 兜底。
 
 
 

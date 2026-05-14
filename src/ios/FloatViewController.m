@@ -9,6 +9,7 @@
 #import <AVKit/AVKit.h>
 
 #import "FloatingWindowPlugin.h"
+#import "UIViewController+SupportedOrientations.h"
 
 @interface FloatViewController () <AVPictureInPictureControllerDelegate>
 
@@ -24,6 +25,8 @@
  
 
 @property(nonatomic,strong) AVPictureInPictureController * picController;
+
+@property(nonatomic,assign) BOOL shouldStartPipWhenPossible;
 
 
 // pluginCallBack provided via header property; don't redeclare here
@@ -49,9 +52,14 @@ static const NSString *ItemStatusContext;
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     // 创建 root view controller 并显示 window，使 player layer 真正加入屏幕层级
     UIViewController *rootVC = [[UIViewController alloc] init];
+    if (i_landscape == 1) {
+        rootVC.supportedOrientations = UIInterfaceOrientationMaskLandscape;
+    } else {
+        rootVC.supportedOrientations = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+    }
     _window.rootViewController = rootVC;
     _window.windowLevel = UIWindowLevelNormal + 1;
-    [_window makeKeyAndVisible];
+    _window.hidden = NO;
 
     //创建uiview对象
     _playerView = [[UIView alloc] init];
@@ -113,6 +121,7 @@ static const NSString *ItemStatusContext;
 
             sself.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
             sself.picController.delegate = sself;
+            [sself.picController addObserver:sself forKeyPath:@"pictureInPicturePossible" options:NSKeyValueObservingOptionNew context:nil];
             is_speed = i_is_speed;
             if(is_speed !=1 ) {
                 sself.picController.requiresLinearPlayback = true; //隐藏快进按钮
@@ -131,6 +140,17 @@ static const NSString *ItemStatusContext;
 //监听视频加载回调
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context
 {
+    if ([keyPath isEqualToString:@"pictureInPicturePossible"] && object == self.picController) {
+        BOOL possible = self.picController.isPictureInPicturePossible;
+        NSLog(@"FloatViewController: pic possible changed = %d", possible);
+        if (possible && self.shouldStartPipWhenPossible) {
+            self.shouldStartPipWhenPossible = NO;
+            self.flg = @"show";
+            [self.picController startPictureInPicture];
+        }
+        return;
+    }
+
     AVPlayerItem *playerItem = (AVPlayerItem *)object;
 
     if ([keyPath isEqualToString:@"loadedTimeRanges"]){
@@ -143,6 +163,11 @@ static const NSString *ItemStatusContext;
             // 自动开始播放，这样 PiP 可以正常工作
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.player play];
+                if (self.shouldStartPipWhenPossible && self.picController.isPictureInPicturePossible) {
+                    self.shouldStartPipWhenPossible = NO;
+                    self.flg = @"show";
+                    [self.picController startPictureInPicture];
+                }
             });
           
         } else{
@@ -153,12 +178,22 @@ static const NSString *ItemStatusContext;
 
 
 - (void) show {
+    if (![AVPictureInPictureController isPictureInPictureSupported]) {
+        NSLog(@"picture in picture is not supported on this device");
+        return;
+    }
+    if (!self.picController) {
+        self.shouldStartPipWhenPossible = YES;
+        NSLog(@"picture controller not ready, waiting for setup");
+        return;
+    }
     if (self.picController.isPictureInPicturePossible) {
         self.flg = @"show";
         [self.picController startPictureInPicture];
     }
     else
     {
+        self.shouldStartPipWhenPossible = YES;
         NSLog(@"picture is not possible");
     }
     
@@ -215,8 +250,14 @@ static const NSString *ItemStatusContext;
         [self.player.currentItem.asset cancelLoading];
         [self.player.currentItem cancelPendingSeeks];
     }
+    if (self.picController) {
+        @try {
+            [self.picController removeObserver:self forKeyPath:@"pictureInPicturePossible"];
+        } @catch (NSException *exception) {}
+    }
     [self.player replaceCurrentItemWithPlayerItem: nil];
     self.player = nil;
+    self.picController = nil;
     
     //self.playerView = nil;
     //self.picController = nil;
@@ -234,6 +275,11 @@ static const NSString *ItemStatusContext;
         if (self.playerItem) {
             [self.playerItem removeObserver:self forKeyPath:@"status"];
             [self.playerItem removeObserver:self forKeyPath:@"loadedTimeRanges"];
+        }
+    } @catch (NSException *e) {}
+    @try {
+        if (self.picController) {
+            [self.picController removeObserver:self forKeyPath:@"pictureInPicturePossible"];
         }
     } @catch (NSException *e) {}
     @try {

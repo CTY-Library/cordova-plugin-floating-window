@@ -22,6 +22,7 @@
 - (void)show:(CDVInvokedUrlCommand*)command;
 - (void)get:(CDVInvokedUrlCommand*)command;
 - (void)close:(CDVInvokedUrlCommand*)command;
+- (void)applyOrientationMask:(UIInterfaceOrientationMask)mask landscape:(NSInteger)landscape;
 @end
 
 @implementation FloatingWindowPlugin
@@ -34,6 +35,46 @@ static FloatingWindowPlugin *selfplugin = nil;
     _floatv1 = [[FloatViewController alloc] init];
 }
 
+- (void)applyOrientationMask:(UIInterfaceOrientationMask)mask landscape:(NSInteger)landscape
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            [self.viewController setValue:@(mask) forKey:@"supportedOrientations"];
+        } @catch (NSException *exception) {
+            NSLog(@"FloatingWindowPlugin: failed to set supportedOrientations: %@", exception.reason);
+        }
+
+        if (@available(iOS 16.0, *)) {
+            [self.viewController setNeedsUpdateOfSupportedInterfaceOrientations];
+            if (self.viewController.navigationController) {
+                [self.viewController.navigationController setNeedsUpdateOfSupportedInterfaceOrientations];
+            }
+
+            UIWindowScene *targetScene = nil;
+            NSSet<UIScene *> *scenes = [UIApplication sharedApplication].connectedScenes;
+            for (UIScene *scene in scenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                    targetScene = (UIWindowScene *)scene;
+                    break;
+                }
+            }
+
+            if (targetScene) {
+                UIWindowSceneGeometryPreferencesIOS *preferences = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:mask];
+                [targetScene requestGeometryUpdateWithPreferences:preferences errorHandler:^(NSError * _Nonnull error) {
+                    NSLog(@"FloatingWindowPlugin: requestGeometryUpdate failed: %@", error.localizedDescription);
+                }];
+            } else {
+                NSLog(@"FloatingWindowPlugin: no active UIWindowScene found for requestGeometryUpdate");
+            }
+        } else {
+            UIInterfaceOrientation target = (landscape == 1) ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
+            [[UIDevice currentDevice] setValue:@(target) forKey:@"orientation"];
+            [UIViewController attemptRotationToDeviceOrientation];
+        }
+    });
+}
+
 - (void)show:(CDVInvokedUrlCommand *)command
 {
     selfplugin = self;
@@ -44,6 +85,13 @@ static FloatingWindowPlugin *selfplugin = nil;
     times_cur =  [str_times_cur  floatValue];
     landscape = [str_landscape integerValue];
     is_speed = [str_is_speed integerValue];
+
+    // Sync orientation mask for current Cordova view controller to avoid landscape request failure
+    UIInterfaceOrientationMask mask = (landscape == 1)
+        ? UIInterfaceOrientationMaskLandscape
+        : (UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown);
+    [self applyOrientationMask:mask landscape:landscape];
+
     myAsyncCallBackId = command.callbackId;
     pluginResult = [CDVPluginResult resultWithStatus: CDVCommandStatus_NO_RESULT];
     [pluginResult setKeepCallbackAsBool:YES];

@@ -48,6 +48,24 @@
         <param name="ios-package" value="FloatingWindowPlugin"/> 
       </feature> 
     </config-file>  
+
+    <!-- Ensure host app supports both portrait/landscape so plugin can request rotation -->
+    <config-file target="*-Info.plist" parent="UISupportedInterfaceOrientations">
+      <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+      </array>
+    </config-file>
+
+    <!-- Required for PiP continuity when app goes background -->
+    <config-file target="*-Info.plist" parent="UIBackgroundModes">
+      <array>
+        <string>audio</string>
+      </array>
+    </config-file>
+
      <!-- 源文件 -->
      <source-file src="src/ios/FloatingWindowPlugin.m"/> 
      <source-file src="src/ios/FloatingWindowPlugin.h"/> 
