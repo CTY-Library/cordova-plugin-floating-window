@@ -47,6 +47,12 @@ static const NSString *ItemStatusContext;
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
     
     _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    // 创建 root view controller 并显示 window，使 player layer 真正加入屏幕层级
+    UIViewController *rootVC = [[UIViewController alloc] init];
+    _window.rootViewController = rootVC;
+    _window.windowLevel = UIWindowLevelNormal + 1;
+    [_window makeKeyAndVisible];
+
     //创建uiview对象
     _playerView = [[UIView alloc] init];
     paly_times_cur = i_times_cur;
@@ -58,7 +64,10 @@ static const NSString *ItemStatusContext;
     _playerView.backgroundColor = [UIColor whiteColor];
     [self.playerView setTag:20];
     
-    [_window addSubview:_playerView];
+    [rootVC.view addSubview:_playerView];
+    // 支持自动调整大小，确保 layer 能拿到正确 bounds
+    _playerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _playerView.translatesAutoresizingMaskIntoConstraints = YES;
      
     
     AVAsset *asset = [AVAsset assetWithURL: [NSURL URLWithString:video_url]];
@@ -74,13 +83,13 @@ static const NSString *ItemStatusContext;
     self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
 
     AVPlayerLayer * layer = [AVPlayerLayer playerLayerWithPlayer:self.player];
-    
-    layer.frame = self.playerView.bounds;
+    layer.videoGravity = AVLayerVideoGravityResizeAspect;
     layer.backgroundColor = [UIColor blueColor].CGColor;
-    NSLog(@"%@",NSStringFromCGRect(self.view.bounds));
     [self.playerView.layer addSublayer:layer];
-
-    NSLog(@"---------------%@",NSStringFromCGRect(layer.bounds));
+    // 把 layer 的 frame 设置在加入层级后，确保 bounds 已经正确
+    layer.frame = self.playerView.bounds;
+    layer.needsDisplayOnBoundsChange = YES;
+    NSLog(@"playerView bounds: %@", NSStringFromCGRect(self.playerView.bounds));
 
     self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
     self.picController.delegate = self;
@@ -106,7 +115,12 @@ static const NSString *ItemStatusContext;
     }else if ([keyPath isEqualToString:@"status"]){
         if (playerItem.status == AVPlayerItemStatusReadyToPlay){
             //NSLog(@"playerItem is ready");
+            // 通知 plugin 准备就绪
             [self.pluginCallBack  sendCmd: @"" ];
+            // 自动开始播放，这样 PiP 可以正常工作
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.player play];
+            });
           
         } else{
             NSLog(@"load break");
@@ -189,6 +203,19 @@ static const NSString *ItemStatusContext;
     
     [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
    
+}
+
+- (void)dealloc {
+    // 清理通知与观察者，避免崩溃
+    @try {
+        if (self.playerItem) {
+            [self.playerItem removeObserver:self forKeyPath:@"status"];
+            [self.playerItem removeObserver:self forKeyPath:@"loadedTimeRanges"];
+        }
+    } @catch (NSException *e) {}
+    @try {
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+    } @catch (NSException *e) {}
 }
 
 -(void)playbackFinished:(NSNotification *)notification{
