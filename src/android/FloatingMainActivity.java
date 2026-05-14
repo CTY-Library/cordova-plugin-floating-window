@@ -45,10 +45,8 @@ public  class FloatingMainActivity extends CordovaActivity {
 
     if (!Settings.canDrawOverlays(this)) {
       Log.w("FloatingMainActivity", "onActivityResult: overlay permission NOT granted");
-      Toast.makeText(this, "授权失败", Toast.LENGTH_SHORT).show();
     } else {
       Log.i("FloatingMainActivity", "onActivityResult: overlay permission granted, starting service");
-      Toast.makeText(this, "授权成功", Toast.LENGTH_SHORT).show();
       Intent it = new Intent(FloatingMainActivity.this, FloatingVideoService.class);
       if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
         startForegroundService(it);
@@ -93,7 +91,6 @@ public  class FloatingMainActivity extends CordovaActivity {
 
       if (!Settings.canDrawOverlays(context)) {
         Log.w("FloatingMainActivity","initStartFloatingVideoService: overlay permission missing, requesting");
-        Toast.makeText(context, "当前无权限，请授权", Toast.LENGTH_SHORT);
         final Intent it_power = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.getPackageName()));
         // startActivityForResult must run on UI thread
         try {
