@@ -8,6 +8,26 @@
 
 #import "FloatViewController.h"
 
+static NSString *FWMaskToString(UIInterfaceOrientationMask mask) {
+    NSMutableArray<NSString *> *items = [NSMutableArray array];
+    if (mask & UIInterfaceOrientationMaskPortrait) [items addObject:@"Portrait"];
+    if (mask & UIInterfaceOrientationMaskPortraitUpsideDown) [items addObject:@"PortraitUpsideDown"];
+    if (mask & UIInterfaceOrientationMaskLandscapeLeft) [items addObject:@"LandscapeLeft"];
+    if (mask & UIInterfaceOrientationMaskLandscapeRight) [items addObject:@"LandscapeRight"];
+    if (items.count == 0) [items addObject:@"None"];
+    return [items componentsJoinedByString:@"|"];
+}
+
+static NSString *FWSceneActivationStateToString(UISceneActivationState state) {
+    switch (state) {
+        case UISceneActivationStateUnattached: return @"Unattached";
+        case UISceneActivationStateForegroundActive: return @"ForegroundActive";
+        case UISceneActivationStateForegroundInactive: return @"ForegroundInactive";
+        case UISceneActivationStateBackground: return @"Background";
+    }
+    return @"Unknown";
+}
+
 
 @interface FloatingWindowPlugin : CDVPlugin <FloatingWindowPluginCallback> {
     NSString *urlString;
@@ -33,15 +53,25 @@ static FloatingWindowPlugin *selfplugin = nil;
 
 - (void)pluginInitialize {
     _floatv1 = [[FloatViewController alloc] init];
+    NSLog(@"FloatingWindowPlugin: pluginInitialize complete");
 }
 
 - (void)applyOrientationMask:(UIInterfaceOrientationMask)mask landscape:(NSInteger)landscape
 {
     dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"FloatingWindowPlugin: applyOrientationMask start, requested=%@ landscape=%ld", FWMaskToString(mask), (long)landscape);
         @try {
             [self.viewController setValue:@(mask) forKey:@"supportedOrientations"];
+            NSLog(@"FloatingWindowPlugin: set supportedOrientations via KVC success");
         } @catch (NSException *exception) {
             NSLog(@"FloatingWindowPlugin: failed to set supportedOrientations: %@", exception.reason);
+        }
+
+        UIInterfaceOrientationMask currentSupported = [self.viewController supportedInterfaceOrientations];
+        NSLog(@"FloatingWindowPlugin: host supportedInterfaceOrientations=%@", FWMaskToString(currentSupported));
+        if ((currentSupported & mask) == 0) {
+            NSLog(@"FloatingWindowPlugin: skip geometry update, host supports mask=%lu only current=%lu", (unsigned long)mask, (unsigned long)currentSupported);
+            return;
         }
 
         if (@available(iOS 16.0, *)) {
@@ -57,9 +87,11 @@ static FloatingWindowPlugin *selfplugin = nil;
                     targetScene = (UIWindowScene *)scene;
                     break;
                 }
+                NSLog(@"FloatingWindowPlugin: scene candidate state=%@", FWSceneActivationStateToString(scene.activationState));
             }
 
             if (targetScene) {
+                NSLog(@"FloatingWindowPlugin: using active UIWindowScene for geometry update");
                 UIWindowSceneGeometryPreferencesIOS *preferences = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:mask];
                 [targetScene requestGeometryUpdateWithPreferences:preferences errorHandler:^(NSError * _Nonnull error) {
                     NSLog(@"FloatingWindowPlugin: requestGeometryUpdate failed: %@", error.localizedDescription);
@@ -69,9 +101,12 @@ static FloatingWindowPlugin *selfplugin = nil;
             }
         } else {
             UIInterfaceOrientation target = (landscape == 1) ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
+            NSLog(@"FloatingWindowPlugin: fallback rotate with UIDevice orientation=%ld", (long)target);
             [[UIDevice currentDevice] setValue:@(target) forKey:@"orientation"];
             [UIViewController attemptRotationToDeviceOrientation];
         }
+
+        NSLog(@"FloatingWindowPlugin: applyOrientationMask end");
     });
 }
 
@@ -86,6 +121,8 @@ static FloatingWindowPlugin *selfplugin = nil;
     landscape = [str_landscape integerValue];
     is_speed = [str_is_speed integerValue];
 
+    NSLog(@"FloatingWindowPlugin: show called, url=%@ times_cur=%.3f landscape=%ld is_speed=%ld callbackId=%@", urlString, times_cur, (long)landscape, (long)is_speed, command.callbackId);
+
     // Sync orientation mask for current Cordova view controller to avoid landscape request failure
     UIInterfaceOrientationMask mask = (landscape == 1)
         ? UIInterfaceOrientationMaskLandscape
@@ -99,6 +136,8 @@ static FloatingWindowPlugin *selfplugin = nil;
 
     // Ensure callback reference is available to the view controller
     self.floatv1.pluginCallBack = self;
+    self.floatv1.hostViewController = self.viewController;
+    NSLog(@"FloatingWindowPlugin: bind callback+hostViewController, hostViewLoaded=%d hostHasWindow=%d", self.viewController.isViewLoaded, (self.viewController.view.window != nil));
 
     // Do setup off the plugin main thread; UI parts are dispatched to main queue
     [self.commandDelegate runInBackground:^{
@@ -112,6 +151,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 {
     if(myAsyncCallBackId != nil)
     {
+        NSLog(@"FloatingWindowPlugin: sendCmd => %@ (callbackId=%@)", video_times, myAsyncCallBackId);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: video_times ];
         //将 CDVPluginResult.keepCallback 设置为 true ,则不会销毁callback
         [pluginResult  setKeepCallbackAsBool:YES];
@@ -123,6 +163,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 - (void)get:(CDVInvokedUrlCommand *)command
 {
     selfplugin = self;
+    NSLog(@"FloatingWindowPlugin: get called callbackId=%@", command.callbackId);
     // Ensure UI call on main thread
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.floatv1 show];
@@ -141,6 +182,7 @@ static FloatingWindowPlugin *selfplugin = nil;
 - (void)close:(CDVInvokedUrlCommand *)command
 {
     selfplugin = self;
+    NSLog(@"FloatingWindowPlugin: close called callbackId=%@", command.callbackId);
     // Ensure UI call on main thread
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.floatv1 close];

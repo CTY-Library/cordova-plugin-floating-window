@@ -37,29 +37,51 @@ static float  paly_times_cur;
 static int is_speed;
 static const NSString *ItemStatusContext;
 
+static NSString *FWVCAppStateString(UIApplicationState state) {
+    switch (state) {
+        case UIApplicationStateActive: return @"Active";
+        case UIApplicationStateInactive: return @"Inactive";
+        case UIApplicationStateBackground: return @"Background";
+    }
+    return @"Unknown";
+}
+
 @implementation FloatViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
- 
+    NSLog(@"FloatViewController: viewDidLoad");
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(appDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(audioSessionInterrupted:) name:AVAudioSessionInterruptionNotification object:nil];
 }
 
 - (void)setUpPlayer: (NSString *)video_url  i_times_cur:(float )i_times_cur   i_landscape:(NSInteger )i_landscape  i_is_speed:(NSInteger )i_is_speed
 {
+    NSLog(@"FloatViewController: setUpPlayer start url=%@ times_cur=%.3f landscape=%ld is_speed=%ld appState=%@", video_url, i_times_cur, (long)i_landscape, (long)i_is_speed, FWVCAppStateString([UIApplication sharedApplication].applicationState));
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     [[AVAudioSession sharedInstance] setActive:YES error:nil];
-    
-    _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    // 创建 root view controller 并显示 window，使 player layer 真正加入屏幕层级
-    UIViewController *rootVC = [[UIViewController alloc] init];
-    if (i_landscape == 1) {
-        rootVC.supportedOrientations = UIInterfaceOrientationMaskLandscape;
+
+    UIView *containerView = nil;
+    if (self.hostViewController && self.hostViewController.view.window) {
+        containerView = self.hostViewController.view;
+        NSLog(@"FloatViewController: using hostViewController.view as container, hostWindow=%@", self.hostViewController.view.window);
     } else {
-        rootVC.supportedOrientations = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+        // Fallback only when host view is unavailable; primary path is host foreground scene view.
+        _window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+        UIViewController *rootVC = [[UIViewController alloc] init];
+        if (i_landscape == 1) {
+            rootVC.supportedOrientations = UIInterfaceOrientationMaskLandscape;
+        } else {
+            rootVC.supportedOrientations = UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown;
+        }
+        _window.rootViewController = rootVC;
+        _window.windowLevel = UIWindowLevelNormal;
+        [_window makeKeyAndVisible];
+        containerView = rootVC.view;
+        NSLog(@"FloatViewController: host view unavailable, fallback to internal window=%@", _window);
     }
-    _window.rootViewController = rootVC;
-    _window.windowLevel = UIWindowLevelNormal + 1;
-    _window.hidden = NO;
 
     //创建uiview对象
     _playerView = [[UIView alloc] init];
@@ -69,12 +91,13 @@ static const NSString *ItemStatusContext;
     } else {
       [self.playerView setFrame:CGRectMake(100,100,102,175)];
     }
+        NSLog(@"FloatViewController: playerView frame=%@", NSStringFromCGRect(self.playerView.frame));
     _playerView.backgroundColor = [UIColor whiteColor];
     [self.playerView setTag:20];
     
-    [rootVC.view addSubview:_playerView];
+    [containerView addSubview:_playerView];
     // 支持自动调整大小，确保 layer 能拿到正确 bounds
-    _playerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _playerView.autoresizingMask = UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
     _playerView.translatesAutoresizingMaskIntoConstraints = YES;
      
     
@@ -91,6 +114,7 @@ static const NSString *ItemStatusContext;
                 NSLog(@"FloatViewController: asset key %@ failed to load: %@", key, error);
                 return;
             }
+            NSLog(@"FloatViewController: asset key %@ loaded", key);
         }
 
         NSArray *videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo];
@@ -127,7 +151,8 @@ static const NSString *ItemStatusContext;
                 sself.picController.requiresLinearPlayback = true; //隐藏快进按钮
             }
 
-            NSLog(@"FloatViewController: pic possible = %d", sself.picController.isPictureInPicturePossible);
+            NSLog(@"FloatViewController: pic possible = %d, host window active = %d", sself.picController.isPictureInPicturePossible, (sself.hostViewController.view.window != nil));
+            NSLog(@"FloatViewController: pip active=%d suspended=%d", sself.picController.isPictureInPictureActive, sself.picController.isPictureInPictureSuspended);
 
             //给AVPlayerItem添加播放完成通知
             [[NSNotificationCenter defaultCenter] addObserver:sself selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:sself.player.currentItem];
@@ -154,8 +179,9 @@ static const NSString *ItemStatusContext;
     AVPlayerItem *playerItem = (AVPlayerItem *)object;
 
     if ([keyPath isEqualToString:@"loadedTimeRanges"]){
-        
+        NSLog(@"FloatViewController: loadedTimeRanges updated, count=%lu", (unsigned long)playerItem.loadedTimeRanges.count);
     }else if ([keyPath isEqualToString:@"status"]){
+        NSLog(@"FloatViewController: playerItem status changed=%ld error=%@", (long)playerItem.status, playerItem.error.localizedDescription);
         if (playerItem.status == AVPlayerItemStatusReadyToPlay){
             //NSLog(@"playerItem is ready");
             // 通知 plugin 准备就绪
@@ -163,9 +189,11 @@ static const NSString *ItemStatusContext;
             // 自动开始播放，这样 PiP 可以正常工作
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.player play];
+                NSLog(@"FloatViewController: player play issued");
                 if (self.shouldStartPipWhenPossible && self.picController.isPictureInPicturePossible) {
                     self.shouldStartPipWhenPossible = NO;
                     self.flg = @"show";
+                    NSLog(@"FloatViewController: deferred startPictureInPicture now firing");
                     [self.picController startPictureInPicture];
                 }
             });
@@ -178,6 +206,7 @@ static const NSString *ItemStatusContext;
 
 
 - (void) show {
+    NSLog(@"FloatViewController: show called, controllerReady=%d pipPossible=%d pipActive=%d appState=%@", (self.picController != nil), self.picController.isPictureInPicturePossible, self.picController.isPictureInPictureActive, FWVCAppStateString([UIApplication sharedApplication].applicationState));
     if (![AVPictureInPictureController isPictureInPictureSupported]) {
         NSLog(@"picture in picture is not supported on this device");
         return;
@@ -189,6 +218,7 @@ static const NSString *ItemStatusContext;
     }
     if (self.picController.isPictureInPicturePossible) {
         self.flg = @"show";
+        NSLog(@"FloatViewController: startPictureInPicture immediate");
         [self.picController startPictureInPicture];
     }
     else
@@ -200,6 +230,7 @@ static const NSString *ItemStatusContext;
 }
 
 - (void) close{
+    NSLog(@"FloatViewController: close called, pipActive=%d", self.picController.isPictureInPictureActive);
     if(self.picController.isPictureInPictureActive){
         self.flg = @"close";
         [self.picController stopPictureInPicture];
@@ -227,6 +258,7 @@ static const NSString *ItemStatusContext;
  
  
 -(void) sendCurTimeMsg {
+    NSLog(@"FloatViewController: sendCurTimeMsg begin");
     [self.player pause];
     [self.player setRate: 0];
     
@@ -263,10 +295,29 @@ static const NSString *ItemStatusContext;
     //self.picController = nil;
     
     [self.playerView removeFromSuperview];
+    if (self.window) {
+        self.window.hidden = YES;
+        self.window.rootViewController = nil;
+        self.window = nil;
+    }
     //[self removeFromParentViewController];
     
     [self.pluginCallBack  sendCmd: [NSString stringWithFormat:@"%d", seconds ]];
+    NSLog(@"FloatViewController: sendCurTimeMsg end, seconds=%d", seconds);
    
+}
+
+- (void)appDidBecomeActive:(NSNotification *)notification {
+    NSLog(@"FloatViewController: appDidBecomeActive appState=%@", FWVCAppStateString([UIApplication sharedApplication].applicationState));
+}
+
+- (void)appDidEnterBackground:(NSNotification *)notification {
+    NSLog(@"FloatViewController: appDidEnterBackground appState=%@", FWVCAppStateString([UIApplication sharedApplication].applicationState));
+}
+
+- (void)audioSessionInterrupted:(NSNotification *)notification {
+    NSNumber *type = notification.userInfo[AVAudioSessionInterruptionTypeKey];
+    NSLog(@"FloatViewController: audioSessionInterrupted type=%@", type);
 }
 
 - (void)dealloc {
@@ -313,6 +364,7 @@ static const NSString *ItemStatusContext;
 - (void)pictureInPictureControllerDidStartPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //开启
+    NSLog(@"FloatViewController: pictureInPictureControllerDidStartPictureInPicture");
     
     [self.player play];
     [self jumptoValue];
@@ -322,18 +374,21 @@ static const NSString *ItemStatusContext;
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController failedToStartPictureInPictureWithError:(NSError *)error
 {
-    NSLog(@"%@",error);
+    NSLog(@"FloatViewController: failedToStartPiP domain=%@ code=%ld reason=%@ desc=%@", error.domain, (long)error.code, error.localizedFailureReason, error.localizedDescription);
+    NSLog(@"FloatViewController: fail context hostWindow=%@ appState=%@", self.hostViewController.view.window, FWVCAppStateString([UIApplication sharedApplication].applicationState));
 }
 
 
 - (void)pictureInPictureControllerWillStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
     //停止ing
+   NSLog(@"FloatViewController: pictureInPictureControllerWillStopPictureInPicture");
    [self sendCurTimeMsg];
 }
 - (void)pictureInPictureControllerDidStopPictureInPicture:(AVPictureInPictureController *)pictureInPictureController
 {
 //停止
+    NSLog(@"FloatViewController: pictureInPictureControllerDidStopPictureInPicture");
  
     
 }

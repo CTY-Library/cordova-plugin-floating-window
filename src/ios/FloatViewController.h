@@ -18,6 +18,9 @@
 // Plugin callback reference (set by FloatingWindowPlugin)
 @property (nonatomic, weak) id<FloatingWindowPluginCallback> pluginCallBack;
 
+// Host view controller from Cordova scene, used to keep PiP content source in foreground-active scene
+@property (nonatomic, weak) UIViewController *hostViewController;
+
 // Allow KVC for supportedOrientations (used by some Cordova orientation handling)
 @property (nonatomic, assign) UIInterfaceOrientationMask supportedOrientations;
 
