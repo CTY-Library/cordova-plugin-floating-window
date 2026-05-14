@@ -5,11 +5,11 @@
 //  Created by noah on 2022/1/13.
 //
 
-#import <UIKit/UIKit.h>
+#import <Cordova/CDV.h>
 
-@interface FloatingWindowPlugin : UIViewController
+@interface FloatingWindowPlugin : CDVPlugin
 
-   - (void) sendCmd : (NSString *)video_times;
+- (void) sendCmd : (NSString *)video_times;
 
 @end
 

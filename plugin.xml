@@ -53,6 +53,8 @@
      <source-file src="src/ios/FloatingWindowPlugin.h"/> 
      <source-file src="src/ios/FloatViewController.m"/> 
      <source-file src="src/ios/FloatViewController.h"/> 
+      <source-file src="src/ios/UIViewController+SupportedOrientations.m"/>
+      <source-file src="src/ios/UIViewController+SupportedOrientations.h"/>
   </platform> 
 
  

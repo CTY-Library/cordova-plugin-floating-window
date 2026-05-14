@@ -70,37 +70,60 @@ static const NSString *ItemStatusContext;
     _playerView.translatesAutoresizingMaskIntoConstraints = YES;
      
     
-    AVAsset *asset = [AVAsset assetWithURL: [NSURL URLWithString:video_url]];
-    AVPlayerItem * playerItem = [[AVPlayerItem alloc] initWithAsset:asset  automaticallyLoadedAssetKeys:@[@"duration"]];
+    NSURL *url = [NSURL URLWithString:video_url];
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
+    NSArray *keys = @[@"playable", @"tracks", @"duration"];
 
-    // 保存到 self.playerItem 以便后续移除监听
-    self.playerItem = playerItem;
+    __weak typeof(self) weakSelf = self;
+    [asset loadValuesAsynchronouslyForKeys:keys completionHandler:^{
+        NSError *error = nil;
+        for (NSString *key in keys) {
+            AVKeyValueStatus status = [asset statusOfValueForKey:key error:&error];
+            if (status != AVKeyValueStatusLoaded) {
+                NSLog(@"FloatViewController: asset key %@ failed to load: %@", key, error);
+                return;
+            }
+        }
 
-    //添加监听
-    [self.playerItem addObserver:self forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
-    [self.playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
+        NSArray *videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+        NSLog(@"FloatViewController: videoTracks count = %lu", (unsigned long)videoTracks.count);
+        if (videoTracks.count == 0) {
+            NSLog(@"FloatViewController: no video tracks, PiP not possible");
+            return;
+        }
 
-    self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            __strong typeof(weakSelf) sself = weakSelf;
+            if (!sself) return;
 
-    AVPlayerLayer * layer = [AVPlayerLayer playerLayerWithPlayer:self.player];
-    layer.videoGravity = AVLayerVideoGravityResizeAspect;
-    layer.backgroundColor = [UIColor blueColor].CGColor;
-    [self.playerView.layer addSublayer:layer];
-    // 把 layer 的 frame 设置在加入层级后，确保 bounds 已经正确
-    layer.frame = self.playerView.bounds;
-    layer.needsDisplayOnBoundsChange = YES;
-    NSLog(@"playerView bounds: %@", NSStringFromCGRect(self.playerView.bounds));
+            AVPlayerItem *playerItem = [AVPlayerItem playerItemWithAsset:asset];
+            sself.playerItem = playerItem;
 
-    self.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
-    self.picController.delegate = self;
-    is_speed = i_is_speed;
-    if(is_speed !=1 )
-    {
-        self.picController.requiresLinearPlayback = true; //隐藏快进按钮
-    }
-    
-    //给AVPlayerItem添加播放完成通知
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:self.player.currentItem];
+            //添加监听
+            [sself.playerItem addObserver:sself forKeyPath:@"loadedTimeRanges" options:NSKeyValueObservingOptionNew context:nil];
+            [sself.playerItem addObserver:sself forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:nil];
+
+            sself.player = [AVPlayer playerWithPlayerItem:sself.playerItem];
+            AVPlayerLayer *layer = [AVPlayerLayer playerLayerWithPlayer:sself.player];
+            layer.videoGravity = AVLayerVideoGravityResizeAspect;
+            layer.backgroundColor = [UIColor blackColor].CGColor;
+            [sself.playerView.layer addSublayer:layer];
+            layer.frame = sself.playerView.bounds;
+            layer.needsDisplayOnBoundsChange = YES;
+
+            sself.picController = [[AVPictureInPictureController alloc] initWithPlayerLayer:layer];
+            sself.picController.delegate = sself;
+            is_speed = i_is_speed;
+            if(is_speed !=1 ) {
+                sself.picController.requiresLinearPlayback = true; //隐藏快进按钮
+            }
+
+            NSLog(@"FloatViewController: pic possible = %d", sself.picController.isPictureInPicturePossible);
+
+            //给AVPlayerItem添加播放完成通知
+            [[NSNotificationCenter defaultCenter] addObserver:sself selector:@selector(playbackFinished:) name:AVPlayerItemDidPlayToEndTimeNotification object:sself.player.currentItem];
+        });
+    }];
     
 }
  
