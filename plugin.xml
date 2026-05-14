@@ -2,7 +2,7 @@
 <plugin id="cordova-plugin-floating-window"
   xmlns="http://apache.org/cordova/ns/plugins/1.0" 
   xmlns:android="http://schemas.android.com/apk/res/android"
-  version="1.0.0">  
+  version="3.0.1">  
   <name>FloatingWindowPlugin</name>   
   <js-module name="FloatingWindowPlugin" src="www/FloatingWindowPlugin.js"> 
     <clobbers target="FloatingWindowPlugin"/> 

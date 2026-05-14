@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-floating-window",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "a cordova plugin,floating window",
   "cordova": {
     "id": "cordova-plugin-floating-window",
