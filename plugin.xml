@@ -19,6 +19,7 @@
       <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
       <uses-permission android:name="android.permission.REORDER_TASKS" />
       <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+      <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
  
     </config-file>
     <source-file src="src/android/FloatingWindowPlugin.java" target-dir="src/com/plugin/floatv1/floatingwindow"/>   
@@ -36,7 +37,7 @@
 
     <config-file parent="/manifest/application" target="AndroidManifest.xml">
       <activity android:name="com.plugin.floatv1.floatingwindow.FloatingMainActivity" android:exported="false" />
-      <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService" android:exported="false" />
+      <service android:name="com.plugin.floatv1.floatingwindow.FloatingVideoService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
     </config-file>
 
   </platform>  
